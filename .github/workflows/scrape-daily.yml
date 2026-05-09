@@ -1,0 +1,47 @@
+name: Daily scrape
+
+on:
+  schedule:
+    # 06:00 AEST = 20:00 UTC. Cron is UTC; run twice and skip duplicates via UNIQUE constraint.
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+    inputs:
+      company:
+        description: "Optional company slug to run a single adapter"
+        required: false
+        type: string
+      dry_run:
+        description: "Print readings without writing to Supabase"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install scrapers
+        working-directory: scrapers
+        run: |
+          pip install -e .[playwright]
+          # Only install Playwright Chromium if we end up needing it
+          # python -m playwright install --with-deps chromium
+
+      - name: Run scrapers
+        working-directory: scrapers
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.company }}" ]; then ARGS="$ARGS --company ${{ inputs.company }}"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          python -m scrapers.runner $ARGS

@@ -1,0 +1,44 @@
+[project]
+name = "vic-water-scrapers"
+version = "0.1.0"
+description = "Daily scrapers for Victorian water corporation storage levels"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "selectolax>=0.3.21",
+    "supabase>=2.5",
+    "python-dateutil>=2.9",
+    "pydantic>=2.7",
+    "tenacity>=8.3",
+    "structlog>=24.1",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+playwright = ["playwright>=1.45"]
+dev = [
+    "pytest>=8",
+    "pytest-vcr>=1.0.2",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+vic-water-scrape = "scrapers.runner:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["scrapers"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
