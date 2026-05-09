@@ -1,0 +1,163 @@
+{
+  "date" : "2026-05-06",
+  "comparedToDate" : "2026-05-05",
+  "waterStorageLevels" : {
+    "waterStorageTotals" : {
+      "percentageFull" : 65.01,
+      "percentageCapacityChangeBetweenDates" : -0.04,
+      "currentCapacity" : 1178270,
+      "capacityChangeBetweenDates" : -711,
+      "totalCapacity" : 1812175
+    },
+    "catchmentStorageLevels" : {
+      "catchments" : [ {
+        "name" : "Thomson",
+        "totalCapacity" : 1068000,
+        "currentCapacity" : 710305,
+        "capacityChangeBetweenDates" : -1018,
+        "percentageFull" : 66.50,
+        "rainfallRecorded" : 0.00
+      }, {
+        "name" : "Cardinia",
+        "totalCapacity" : 286911,
+        "currentCapacity" : 173462,
+        "capacityChangeBetweenDates" : 9,
+        "percentageFull" : 60.45,
+        "rainfallRecorded" : null
+      }, {
+        "name" : "Upper Yarra",
+        "totalCapacity" : 200579,
+        "currentCapacity" : 106111,
+        "capacityChangeBetweenDates" : 0,
+        "percentageFull" : 52.90,
+        "rainfallRecorded" : 0.00
+      }, {
+        "name" : "Sugarloaf",
+        "totalCapacity" : 96253,
+        "currentCapacity" : 65908,
+        "capacityChangeBetweenDates" : 174,
+        "percentageFull" : 68.47,
+        "rainfallRecorded" : null
+      }, {
+        "name" : "Silvan",
+        "totalCapacity" : 40445,
+        "currentCapacity" : 35287,
+        "capacityChangeBetweenDates" : 195,
+        "percentageFull" : 87.24,
+        "rainfallRecorded" : null
+      }, {
+        "name" : "Tarago",
+        "totalCapacity" : 37580,
+        "currentCapacity" : 33828,
+        "capacityChangeBetweenDates" : -10,
+        "percentageFull" : 90.01,
+        "rainfallRecorded" : null
+      }, {
+        "name" : "Yan Yean",
+        "totalCapacity" : 30266,
+        "currentCapacity" : 17365,
+        "capacityChangeBetweenDates" : -10,
+        "percentageFull" : 57.37,
+        "rainfallRecorded" : null
+      }, {
+        "name" : "Greenvale",
+        "totalCapacity" : 26839,
+        "currentCapacity" : 24183,
+        "capacityChangeBetweenDates" : 0,
+        "percentageFull" : 90.10,
+        "rainfallRecorded" : null
+      }, {
+        "name" : "Maroondah",
+        "totalCapacity" : 22179,
+        "currentCapacity" : 8652,
+        "capacityChangeBetweenDates" : -54,
+        "percentageFull" : 39.00,
+        "rainfallRecorded" : 0.00
+      }, {
+        "name" : "O'Shannassy",
+        "totalCapacity" : 3123,
+        "currentCapacity" : 3169,
+        "capacityChangeBetweenDates" : 3,
+        "percentageFull" : 100.00,
+        "rainfallRecorded" : 0.40
+      } ]
+    }
+  },
+  "rainfallLevels" : {
+    "rainfallLevelTotals" : {
+      "amountToday" : 0,
+      "rainfallChangeBetweenDates" : -2.7
+    },
+    "catchmentRainfallLevels" : {
+      "catchments" : [ {
+        "name" : "Thomson",
+        "last24hrsTo8am" : 0.00,
+        "dailyAvgForMonth" : 2.26,
+        "monthToDate" : 9.80,
+        "monthlyThirtyYearMeanAvg" : 69.90
+      }, {
+        "name" : "Upper Yarra",
+        "last24hrsTo8am" : 0.00,
+        "dailyAvgForMonth" : 2.73,
+        "monthToDate" : 29.40,
+        "monthlyThirtyYearMeanAvg" : 84.50
+      }, {
+        "name" : "Maroondah",
+        "last24hrsTo8am" : 0.00,
+        "dailyAvgForMonth" : 2.77,
+        "monthToDate" : 18.60,
+        "monthlyThirtyYearMeanAvg" : 85.60
+      }, {
+        "name" : "O'Shannassy",
+        "last24hrsTo8am" : 0.40,
+        "dailyAvgForMonth" : 3.61,
+        "monthToDate" : 30.00,
+        "monthlyThirtyYearMeanAvg" : 111.70
+      } ]
+    }
+  },
+  "flowLevels" : {
+    "flowLevelTotals" : {
+      "amountToday" : 453,
+      "thirtyYearFlowAverage" : 21930,
+      "dailyAverageForMonth" : 709,
+      "monthToDate" : 2909,
+      "flowLevelChangeBetweenDates" : -101
+    },
+    "catchmentFlowLevels" : {
+      "catchments" : [ {
+        "name" : "Thomson",
+        "last24hrsTo8am" : 94,
+        "dailyAvgForMonth" : 294,
+        "monthToDate" : 1260,
+        "monthlyThirtyYearMeanAvg" : 9101
+      }, {
+        "name" : "Upper Yarra",
+        "last24hrsTo8am" : 68,
+        "dailyAvgForMonth" : 127,
+        "monthToDate" : 385,
+        "monthlyThirtyYearMeanAvg" : 3919
+      }, {
+        "name" : "Maroondah",
+        "last24hrsTo8am" : 140,
+        "dailyAvgForMonth" : 142,
+        "monthToDate" : 590,
+        "monthlyThirtyYearMeanAvg" : 4387
+      }, {
+        "name" : "O'Shannassy",
+        "last24hrsTo8am" : 151,
+        "dailyAvgForMonth" : 146,
+        "monthToDate" : 674,
+        "monthlyThirtyYearMeanAvg" : 4523
+      } ]
+    }
+  },
+  "waterUseLevels" : {
+    "amountToday" : 1249,
+    "dailyFiveYearAverage" : 1196,
+    "waterUseChangeBetweenDates" : 38
+  },
+  "todaysDataAvailable" : false,
+  "todaysDate" : false,
+  "dateGreaterThanLatestDateInRepository" : true
+}

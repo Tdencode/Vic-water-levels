@@ -33,18 +33,19 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
 
 ---
 
-## 1. Melbourne Water 🟡
+## 1. Melbourne Water ✅ (implemented)
 
-- **Page:** https://www.melbournewater.com.au/water-and-environment/water-management/water-storage-levels
-- **Render:** **JS-loaded.** Page shows `Loading...` placeholder; storage table is populated client-side. Need to identify the XHR/JSON call via DevTools, or fall back to Playwright.
-- **Update cadence:** Daily, recorded at 8am, refreshed early afternoon.
-- **Storages:** 10 major reservoirs. Combined capacity 1,810 GL. Names not visible in static HTML — need DevTools inspection.
-- **Open data fallback (promising):** Melbourne Water publishes datasets via ArcGIS:
-  - https://data-melbournewater.opendata.arcgis.com/datasets/melbournewater::water-supply-service-reservoirs-local-system-storage
-  - ArcGIS REST endpoints typically support direct JSON queries (`/FeatureServer/0/query?where=1=1&outFields=*&f=json`). Worth trying first — could be the ideal scrape source.
-- **Plan:** Try ArcGIS endpoint first. If that doesn't have current % full, use Playwright on the main page and capture the XHR.
+- **Public page:** https://www.melbournewater.com.au/water-and-environment/water-management/water-storage-levels
+- **Render:** Page is JS-loaded. The Vue app's `data-api-url` exposed a public AWS API Gateway: `https://api.melbournewater.com.au/water-storage`. JS bundle inspection found `/levels/day?searchDate=YYYY-MM-DD` returning a clean JSON document with all 10 catchments.
+- **Endpoint used:** `GET https://api.melbournewater.com.au/water-storage/levels/day?searchDate=YYYY-MM-DD`
+- **Response shape:**
+  - `date` — authoritative reading date (the API echoes the latest available day if today's data isn't published yet)
+  - `waterStorageLevels.catchmentStorageLevels.catchments[]` — per-reservoir `{ name, totalCapacity, currentCapacity, percentageFull, rainfallRecorded }`
+- **Other discovered endpoints (not currently used):** `/levels/historical` (monthly averages back to 1948), `/levels/storage/day/file` (CSV download), `/levels/week`, `/levels/storage/week/file`.
+- **Update cadence:** Daily, recorded 8am, refreshed early afternoon.
+- **Coverage:** All 10 major reservoirs (Thomson, Cardinia, Upper Yarra, Sugarloaf, Silvan, Tarago, Yan Yean, Greenvale, Maroondah, O'Shannassy).
 
-## 2. Goulburn-Murray Water ✅
+## 2. Goulburn-Murray Water ✅ (implemented)
 
 - **Page:** https://www.g-mwater.com.au/water-operations/storage-levels
 - **Render:** **Static HTML table.** All 23 storages with name, volume (ML), capacity (ML), % full. Confirmed via WebFetch.
@@ -127,8 +128,8 @@ Build easiest-first to derisk the framework, then tackle harder ones:
 
 | # | Company | Difficulty | Source approach |
 |---|---------|------------|-----------------|
-| 1 | Goulburn-Murray Water | ✅ Easy | Parse static HTML table at `/water-operations/storage-levels` |
-| 2 | Melbourne Water | 🟡 Med | Try ArcGIS REST query first; Playwright fallback |
+| 1 | Goulburn-Murray Water | ✅ Done | Parse static HTML table at `/water-operations/storage-levels` |
+| 2 | Melbourne Water | ✅ Done | Public JSON API at `api.melbournewater.com.au/water-storage/levels/day` |
 | 3 | GWMWater | 🟡 Med | Static HTML on summary page (de-dupe weekly) |
 | 4 | Barwon Water | ❓ TBD | httpx + real UA; if blocked, Playwright |
 | 5 | Central Highlands Water | ❓ TBD | httpx + real UA |
