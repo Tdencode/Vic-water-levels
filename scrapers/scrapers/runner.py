@@ -1,20 +1,25 @@
-"""Orchestrates all adapters: fetch readings, write to Supabase, log run status.
-
-Stub. Wire-up happens once adapters exist.
-"""
+"""Orchestrates all adapters: fetch readings, write to Supabase, log run status."""
 
 from __future__ import annotations
 
 import sys
 
 import click
+import structlog
 
 from scrapers.adapters import ALL_ADAPTERS
+from scrapers.storage import get_client, persist_company_readings
+
+log = structlog.get_logger()
 
 
 @click.command()
 @click.option("--company", "company", default=None, help="Slug of a single company to run.")
-@click.option("--dry-run", is_flag=True, help="Print readings without writing to Supabase.")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Print readings without writing to Supabase (no SUPABASE_* env required).",
+)
 def main(company: str | None, dry_run: bool) -> int:
     adapters = ALL_ADAPTERS
     if company:
@@ -27,15 +32,40 @@ def main(company: str | None, dry_run: bool) -> int:
         click.echo("No adapters registered yet.", err=True)
         return 0
 
+    client = None if dry_run else get_client()
+    exit_code = 0
+
     for adapter_cls in adapters:
         adapter = adapter_cls()
-        readings = adapter.fetch()
+        try:
+            readings = adapter.fetch()
+        except Exception as exc:
+            log.error("adapter_failed", company=adapter.company_slug, error=str(exc))
+            click.echo(f"{adapter.company_slug}: FAILED — {exc}", err=True)
+            exit_code = 1
+            continue
+
         click.echo(f"{adapter.company_slug}: {len(readings)} readings")
         if dry_run:
             for r in readings:
-                click.echo(f"  {r.storage_name}: {r.percent_full}% ({r.volume_ml} ML)")
+                pct = f"{r.percent_full:>5.1f}%" if r.percent_full is not None else "   n/a"
+                vol = f"{r.volume_ml:>11,.0f}" if r.volume_ml is not None else "        n/a"
+                click.echo(f"  {pct}  vol={vol} ML  {r.storage_name}")
+            continue
 
-    return 0
+        result = persist_company_readings(
+            client,
+            company_slug=adapter.company_slug,
+            company_name=adapter.company_name,
+            website_url=adapter.source_url,
+            readings=readings,
+        )
+        click.echo(
+            f"  wrote {result.rows_inserted} reading rows for "
+            f"{adapter.company_slug}"
+        )
+
+    return exit_code
 
 
 if __name__ == "__main__":

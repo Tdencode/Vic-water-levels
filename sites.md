@@ -20,7 +20,7 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
 - **Gippsland Water** publishes only news articles and an annual outlook PDF — no live dashboard. Their main storage (Moondarra, ~30 GL) is small. Most Gippsland-region storages they share are managed by **Southern Rural Water** (Blue Rock, Glenmaggie).
 - **Central Highlands Water** (Ballarat region) manages its own storages and has a dedicated levels page.
 
-**Recommended revised list of 7:**
+**Confirmed list of 7 storage managers:**
 1. Melbourne Water
 2. Goulburn-Murray Water (G-MW) — also covers North East Water region
 3. Barwon Water
@@ -29,7 +29,7 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
 6. Southern Rural Water (SRW) — covers many Gippsland & Werribee storages
 7. Central Highlands Water
 
-Open question for the user: confirm this swap or keep the original list (see "Open questions" at bottom).
+**Aggregator decision:** BOM/DEECA aggregators were investigated but rejected for primary use — they don't update with sufficient daily granularity. Per-company scrapers it is. BOM may still be useful as a fallback for Coliban (whose own page is stale).
 
 ---
 
@@ -137,8 +137,6 @@ Build easiest-first to derisk the framework, then tackle harder ones:
 
 ---
 
-## Open questions for the user
+## Daily cron note
 
-1. **Confirm the swap** — drop North East Water + Gippsland Water, add Southern Rural Water + Central Highlands Water? Or keep the originals (in which case Gippsland Water's adapter will be sparse and NEW will likely return data already covered by G-MW)?
-2. **All-of-Victoria via BOM?** If the BOM KiWIS API turns out to cover everything, do we want to use it as the primary source for all storages and treat company attribution as metadata, instead of running 7 independent scrapers? Trade-off: simpler + more reliable, but we lose company-specific data fields and depend on a single upstream.
-3. **Daily cron when most sources update weekly?** GWMWater is weekly, BOM is daily, Melbourne Water is daily, G-MW is daily. A daily cron is fine — `UNIQUE(storage_id, reading_date)` will dedupe — but worth being explicit.
+GWMWater is weekly (uploaded Wed afternoon); G-MW and Melbourne Water are daily; others to be confirmed during adapter dev. The daily cron is fine — `UNIQUE(storage_id, reading_date)` deduplicates so weekly sources just no-op on most days.

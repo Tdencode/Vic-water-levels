@@ -40,15 +40,15 @@ Pre-Phase-1: repo is scaffolded; `sites.md` is being populated by auditing each 
 
 ## Target water companies
 
-Initial best-guess list (will revise during the audit):
+The 7 Victorian storage managers we scrape (see `sites.md` for the audit and the rationale for choosing storage managers over retailers):
 
 1. Melbourne Water
-2. Barwon Water
-3. Goulburn-Murray Water (G-MW)
+2. Goulburn-Murray Water (G-MW) — also covers North East Water region
+3. Barwon Water
 4. GWMWater (Grampians Wimmera Mallee Water)
 5. Coliban Water
-6. Gippsland Water
-7. North East Water
+6. Southern Rural Water (SRW)
+7. Central Highlands Water
 
 ## Local development
 
