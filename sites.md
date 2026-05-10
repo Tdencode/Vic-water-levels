@@ -85,13 +85,15 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
   - DEECA WMIS: `https://data.water.vic.gov.au/`
 - **Plan:** Don't scrape coliban.com.au. Use BOM Water Data Online (KiWIS API) instead — see "BOM aggregator" below.
 
-## 6. Southern Rural Water 🟡 (proposed swap)
+## 6. Southern Rural Water ✅ (implemented)
 
-- **Page:** https://www.srw.com.au/water-and-storage/water-storages/storage-levels
-- **Render:** Page lists 7 storages but values aren't in static HTML — likely JS-loaded chart.
-- **Storages:** Blue Rock Lake, Lake Glenmaggie, Lake Narracan, Melton Reservoir, Merrimu Reservoir, Pykes Creek Reservoir, Rosslynne Reservoir.
-- **⚠️ Risk:** SRW page mentions the **MySRW platform will be decommissioned in May 2026** (this month) and data is moving to a "Prices and Forms" page. Need to monitor this.
-- **Plan:** Investigate XHR calls or scrape per-storage pages.
+- **Public pages:** `/water-and-storage/water-storages/{slug}` for the 7 reservoirs (Blue Rock Lake, Lake Glenmaggie, Lake Narracan, Melton Reservoir, Merrimu Reservoir, Pykes Creek Reservoir, Rosslynne Reservoir).
+- **Render:** Each per-storage page renders a Highcharts chart fed by an XHR. The summary `/storage-levels` page itself only links out to per-storage pages — it has no values.
+- **Endpoint used:** `POST https://www.srw.com.au/graphs/storage-chart/get-chart-data` with `reservoir=N` in the form body and `X-Requested-With: XMLHttpRequest` header (without it the Drupal route returns HTML 404).
+- **Reservoir IDs:** stable 1–7 mapping discovered from each per-storage page's `data-reservoir-id` attribute and hardcoded in the adapter to skip 7 extra page fetches per run.
+- **Response shape:** Highcharts series array. Series 0 ("Storage Level") is daily volume in ML, with a trailing ~80-day axis-padding tail of `[future_ts, 0]` points; the parser walks backwards to the last non-zero entry. Series 1 ("Full Capacity") gives capacity history; the last entry is current capacity. Percent-full is computed.
+- **Coverage:** All 7 SRW major storages.
+- **MySRW decommission caveat:** the page mentions "MySRW platform decommissioned in May 2026" but this refers to the customer-accounts portal at mysrw.com.au — the storage-levels pages on srw.com.au are unaffected.
 
 ## 7. Central Highlands Water ✅ (implemented)
 
@@ -139,7 +141,7 @@ Build easiest-first to derisk the framework, then tackle harder ones:
 | 3 | GWMWater | ✅ Done | Static HTML `table.bwmtable` on summary page |
 | 4 | Barwon Water | ✅ Done | Public JSON web service `/_webservices/json/waterstorage?region_name=…` (Cloudflare needs Chrome-shaped headers — now default in shared client) |
 | 5 | Central Highlands Water | ✅ Done | Static HTML across 4 area pages (`?Area=0..3`); Cloudflare-gated, handled by shared headers |
-| 6 | Southern Rural Water | 🟡 Med | XHR inspection; watch for MySRW decommission |
+| 6 | Southern Rural Water | ✅ Done | POST `/graphs/storage-chart/get-chart-data?reservoir=N` per per-storage page; walk Highcharts series backwards past trailing zero-padding |
 | 7 | Coliban Water | 🔴 Hard | BOM KiWIS API (their own page is stale) |
 
 ---
