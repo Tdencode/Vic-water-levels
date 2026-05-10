@@ -2,7 +2,9 @@ name: Daily scrape
 
 on:
   schedule:
-    # 06:00 AEST = 20:00 UTC. Cron is UTC; run twice and skip duplicates via UNIQUE constraint.
+    # 20:00 UTC = 06:00 AEST (UTC+10) / 07:00 AEDT (UTC+11). Late enough
+    # that overnight publishes have landed; (storage_id, reading_date)
+    # uniqueness makes a re-run on the same day a no-op.
     - cron: "0 20 * * *"
   workflow_dispatch:
     inputs:
@@ -15,6 +17,12 @@ on:
         required: false
         type: boolean
         default: false
+
+# Don't pile up runs if a manual trigger lands while the scheduled one is
+# still going. Daily readings are idempotent so cancelling is safe.
+concurrency:
+  group: daily-scrape
+  cancel-in-progress: false
 
 jobs:
   scrape:
@@ -30,10 +38,7 @@ jobs:
 
       - name: Install scrapers
         working-directory: scrapers
-        run: |
-          pip install -e .[playwright]
-          # Only install Playwright Chromium if we end up needing it
-          # python -m playwright install --with-deps chromium
+        run: pip install -e .
 
       - name: Run scrapers
         working-directory: scrapers

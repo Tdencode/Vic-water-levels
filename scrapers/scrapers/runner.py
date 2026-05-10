@@ -60,10 +60,13 @@ def main(company: str | None, dry_run: bool) -> int:
             website_url=adapter.source_url,
             readings=readings,
         )
-        click.echo(
-            f"  wrote {result.rows_inserted} reading rows for "
-            f"{adapter.company_slug}"
+        summary = (
+            f"  wrote {result.rows_inserted} reading rows for {adapter.company_slug}"
         )
+        if result.rows_failed:
+            summary += f" ({result.rows_failed} failed — see logs)"
+            exit_code = 1
+        click.echo(summary)
 
     return exit_code
 

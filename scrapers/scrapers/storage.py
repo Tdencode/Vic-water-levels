@@ -1,135 +1,60 @@
 """Supabase persistence for scraped Readings.
 
-Idempotent upserts:
-- ``water_companies`` keyed on ``slug``
-- ``storages`` keyed on ``(company_id, slug)``
-- ``readings`` keyed on ``(storage_id, reading_date)``
+The schema lives in its own ``water_levels`` Postgres schema (see
+``supabase/migrations/20260510000000_create_water_levels_schema.sql``)
+and exposes a single ``upsert_reading(...)`` RPC that atomically upserts
+the company, storage and reading rows. We call it once per Reading.
 
-Capacity values from the source are written to ``storages.capacity_ml`` so they
-stay current as published numbers change.
+Why one RPC per row rather than a bulk insert:
+* The RPC handles the company + storage upsert side-effects so the scraper
+  doesn't have to track which storages already exist.
+* At ~90 readings per daily run the round-trip cost is negligible (a few
+  seconds total), and per-row failures don't block the rest of the batch.
 """
 
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any
 
-from supabase import Client, create_client
+import structlog
+from supabase import Client, ClientOptions, create_client
 
 from scrapers.base import Reading
+
+log = structlog.get_logger()
+
+SCHEMA = "water_levels"
+RPC_NAME = "upsert_reading"
 
 
 @dataclass
 class WriteResult:
     rows_inserted: int
-    rows_updated: int
+    rows_failed: int = 0
 
 
 def get_client() -> Client:
     url = os.environ["SUPABASE_URL"]
     key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-    return create_client(url, key)
+    # Pin the client to our schema so plain ``rpc()`` calls hit the right
+    # PostgREST profile. Other apps in the same Supabase project keep
+    # using ``public``.
+    return create_client(url, key, options=ClientOptions(schema=SCHEMA))
 
 
-def upsert_company(
-    client: Client, *, slug: str, name: str, website_url: str | None
-) -> str:
-    """Upsert a water_companies row and return its id."""
-    payload: dict[str, Any] = {"slug": slug, "name": name}
-    if website_url:
-        payload["website_url"] = website_url
-    result = (
-        client.table("water_companies")
-        .upsert(payload, on_conflict="slug")
-        .execute()
-    )
-    return result.data[0]["id"]
-
-
-def upsert_storages(
-    client: Client, *, company_id: str, readings: list[Reading]
-) -> dict[str, str]:
-    """Upsert one row per unique storage and return ``{slug: storage_id}``."""
-    seen: dict[str, dict[str, Any]] = {}
-    for r in readings:
-        if r.storage_slug in seen:
-            continue
-        seen[r.storage_slug] = {
-            "company_id": company_id,
-            "slug": r.storage_slug,
-            "name": r.storage_name,
-            "capacity_ml": r.capacity_ml,
-        }
-    if not seen:
-        return {}
-    result = (
-        client.table("storages")
-        .upsert(list(seen.values()), on_conflict="company_id,slug")
-        .execute()
-    )
-    return {row["slug"]: row["id"] for row in result.data}
-
-
-def upsert_readings(
-    client: Client, *, storage_ids: dict[str, str], readings: list[Reading]
-) -> WriteResult:
-    """Upsert readings keyed on (storage_id, reading_date).
-
-    Supabase doesn't return per-row "inserted vs updated" so we conservatively
-    treat the whole batch as inserts; the unique constraint silently makes
-    repeat-day runs no-ops at the DB level.
-    """
-    rows: list[dict[str, Any]] = []
-    for r in readings:
-        sid = storage_ids.get(r.storage_slug)
-        if sid is None:
-            continue
-        rows.append(
-            {
-                "storage_id": sid,
-                "reading_date": r.reading_date.isoformat(),
-                "volume_ml": r.volume_ml,
-                "percent_full": r.percent_full,
-                "source_url": r.source_url,
-            }
-        )
-    if not rows:
-        return WriteResult(0, 0)
-    (
-        client.table("readings")
-        .upsert(rows, on_conflict="storage_id,reading_date")
-        .execute()
-    )
-    return WriteResult(rows_inserted=len(rows), rows_updated=0)
-
-
-def start_scrape_run(client: Client, *, company_id: str) -> int:
-    result = (
-        client.table("scrape_runs")
-        .insert({"company_id": company_id, "status": "running"})
-        .execute()
-    )
-    return result.data[0]["id"]
-
-
-def finish_scrape_run(
-    client: Client,
-    *,
-    run_id: int,
-    status: str,
-    rows_inserted: int = 0,
-    error_message: str | None = None,
-) -> None:
-    client.table("scrape_runs").update(
-        {
-            "status": status,
-            "finished_at": datetime.now(timezone.utc).isoformat(),
-            "rows_inserted": rows_inserted,
-            "error_message": error_message,
-        }
-    ).eq("id", run_id).execute()
+def _rpc_params(*, company_slug: str, company_name: str, reading: Reading) -> dict:
+    return {
+        "p_company_slug": company_slug,
+        "p_company_name": company_name,
+        "p_storage_slug": reading.storage_slug,
+        "p_storage_name": reading.storage_name,
+        "p_source_url": reading.source_url,
+        "p_reading_date": reading.reading_date.isoformat(),
+        "p_volume_ml": reading.volume_ml,
+        "p_capacity_ml": reading.capacity_ml,
+        "p_percent_full": reading.percent_full,
+    }
 
 
 def persist_company_readings(
@@ -137,30 +62,36 @@ def persist_company_readings(
     *,
     company_slug: str,
     company_name: str,
-    website_url: str,
+    website_url: str | None = None,  # accepted for runner compat; not yet stored
     readings: list[Reading],
 ) -> WriteResult:
-    """Top-level: upsert company + storages + readings, log a scrape_run."""
-    company_id = upsert_company(
-        client, slug=company_slug, name=company_name, website_url=website_url
-    )
-    run_id = start_scrape_run(client, company_id=company_id)
-    try:
-        storage_ids = upsert_storages(
-            client, company_id=company_id, readings=readings
-        )
-        result = upsert_readings(
-            client, storage_ids=storage_ids, readings=readings
-        )
-    except Exception as exc:
-        finish_scrape_run(
-            client, run_id=run_id, status="failed", error_message=str(exc)
-        )
-        raise
-    finish_scrape_run(
-        client,
-        run_id=run_id,
-        status="success",
-        rows_inserted=result.rows_inserted,
-    )
-    return result
+    """Upsert every Reading for one company via the ``upsert_reading`` RPC.
+
+    Per-row errors are logged and counted but don't abort the batch — a
+    transient failure on one storage shouldn't lose the other six readings
+    that came back in the same scrape.
+    """
+    del website_url  # reserved for a future companies.website upsert
+    written = 0
+    failed = 0
+    for reading in readings:
+        try:
+            client.rpc(
+                RPC_NAME,
+                _rpc_params(
+                    company_slug=company_slug,
+                    company_name=company_name,
+                    reading=reading,
+                ),
+            ).execute()
+            written += 1
+        except Exception as exc:
+            failed += 1
+            log.error(
+                "reading_write_failed",
+                company=company_slug,
+                storage=reading.storage_slug,
+                reading_date=reading.reading_date.isoformat(),
+                error=str(exc),
+            )
+    return WriteResult(rows_inserted=written, rows_failed=failed)
