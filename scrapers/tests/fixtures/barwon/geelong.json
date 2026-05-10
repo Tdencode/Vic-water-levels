@@ -1,0 +1,98 @@
+{
+  "weekly_consumption": "212.8",
+  "overall_storage": "36.0",
+  "region_name": "Geelong region water storages",
+  "date_updated": "May, 10 2026 00:00:00",
+  "water_storage_levels": [
+    {
+      "date": "May, 05 2026 00:00:00",
+      "storage_total": "34324.8",
+      "percentage_full": "36.0"
+    },
+    {
+      "date": "May, 06 2026 00:00:00",
+      "storage_total": "34337.3",
+      "percentage_full": "36.0"
+    },
+    {
+      "date": "May, 07 2026 00:00:00",
+      "storage_total": "34378.2",
+      "percentage_full": "36.1"
+    },
+    {
+      "date": "May, 08 2026 00:00:00",
+      "storage_total": "34341.4",
+      "percentage_full": "36.0"
+    },
+    {
+      "date": "May, 09 2026 00:00:00",
+      "storage_total": "34294.9",
+      "percentage_full": "36.0"
+    }
+  ],
+  "weekly_rainfall": "50",
+  "last_year": "37.8",
+  "weekly_storage_change": "+0.0",
+  "reservoir_levels": [
+    {
+      "location": "West Barwon Reservoir",
+      "weekly_variation": "+144",
+      "footnote_ref": 1,
+      "footnote_text": "West Barwon Reservoir is shared with the Corangamite Catchment Management Authority (CCMA) for the Upper Barwon Environmental Entitlement. Barwon Water holds the major share with the CCMA's maximum storage share capped at 2,000 megalitres. Barwon Water's current weekly share of the storage is 4,410 megalitres (updated 9 May 2026)",
+      "present_volume": "6076",
+      "total_capacity": "21504",
+      "same_time_last_year": "3557",
+      "percentage_full": "28.3"
+    },
+    {
+      "location": "Wurdee Boluc Reservoir",
+      "weekly_variation": "-73",
+      "present_volume": "15298",
+      "total_capacity": "37957",
+      "same_time_last_year": "15752",
+      "percentage_full": "40.3"
+    },
+    {
+      "location": "Korweinguboora Reservoir",
+      "weekly_variation": "0",
+      "present_volume": "15",
+      "total_capacity": "2327",
+      "same_time_last_year": "144",
+      "percentage_full": "0.6"
+    },
+    {
+      "location": "Bostock Reservoir",
+      "weekly_variation": "+1",
+      "present_volume": "415",
+      "total_capacity": "7360",
+      "same_time_last_year": "2586",
+      "percentage_full": "5.6"
+    },
+    {
+      "location": "Stony Creek Reservoirs",
+      "weekly_variation": "-57",
+      "present_volume": "4703",
+      "total_capacity": "9397",
+      "same_time_last_year": "4546",
+      "percentage_full": "50.0"
+    },
+    {
+      "location": "Lal Lal Reservoir (Barwon Water's share)",
+      "weekly_variation": "-48",
+      "footnote_ref": 2,
+      "footnote_text": "Lal Lal Reservoir is primarily managed by Central Highlands Water. Barwon Water has an allocated share capped at 16,793 megalitres (about 28% of the reservoir's total capacity). The Corangamite CMA holds a 7,086-megalitre share, and Central Highlands Water is allocated the remainder. Central Highlands Water coordinates releases from the reservoir at Barwon Water's request during the warmer months (typically November to May)",
+      "present_volume": "7788",
+      "total_capacity": "16793",
+      "same_time_last_year": "9466",
+      "percentage_full": "46.4"
+    },
+    {
+      "location": "Geelong total",
+      "weekly_variation": "-33",
+      "present_volume": "34295",
+      "total_capacity": "95338",
+      "same_time_last_year": "36052",
+      "percentage_full": "36.0"
+    }
+  ]
+}

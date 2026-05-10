@@ -1,5 +1,6 @@
 """Per-company scraper adapters. Populated as adapters are implemented."""
 
+from scrapers.adapters.barwon_water import BarwonWaterAdapter
 from scrapers.adapters.goulburn_murray_water import GoulburnMurrayWaterAdapter
 from scrapers.adapters.gwmwater import GWMWaterAdapter
 from scrapers.adapters.melbourne_water import MelbourneWaterAdapter
@@ -9,4 +10,5 @@ ALL_ADAPTERS: list[type[BaseAdapter]] = [
     MelbourneWaterAdapter,
     GoulburnMurrayWaterAdapter,
     GWMWaterAdapter,
+    BarwonWaterAdapter,
 ]

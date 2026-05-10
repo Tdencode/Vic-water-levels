@@ -1,0 +1,46 @@
+{
+  "weekly_consumption": "5.2",
+  "overall_storage": "100",
+  "region_name": "Lorne water storages",
+  "date_updated": "May, 10 2026 00:00:00",
+  "water_storage_levels": [
+    {
+      "date": "May, 05 2026 00:00:00",
+      "storage_total": "215.2",
+      "percentage_full": "100.0"
+    },
+    {
+      "date": "May, 06 2026 00:00:00",
+      "storage_total": "214.9",
+      "percentage_full": "99.9"
+    },
+    {
+      "date": "May, 07 2026 00:00:00",
+      "storage_total": "215.2",
+      "percentage_full": "100.0"
+    },
+    {
+      "date": "May, 08 2026 00:00:00",
+      "storage_total": "215.2",
+      "percentage_full": "100.0"
+    },
+    {
+      "date": "May, 09 2026 00:00:00",
+      "storage_total": "215.2",
+      "percentage_full": "100.0"
+    }
+  ],
+  "weekly_rainfall": "35",
+  "last_year": "97.4",
+  "weekly_storage_change": "+1.9",
+  "reservoir_levels": [
+    {
+      "location": "Allen Reservoir",
+      "weekly_variation": "+4",
+      "present_volume": "215",
+      "total_capacity": "215",
+      "same_time_last_year": "210",
+      "percentage_full": "100"
+    }
+  ]
+}

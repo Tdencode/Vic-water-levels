@@ -57,12 +57,14 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
   - Mobile page: https://www.g-mwater.com.au/mobile/storages.html — simpler markup, good fallback
 - **Plan:** Parse the static table on the main URL. Try RSS as alternative source for resilience. **Easiest adapter — build first.**
 
-## 3. Barwon Water ❓
+## 3. Barwon Water ✅ (implemented)
 
-- **Page:** https://www.barwonwater.vic.gov.au/water-and-waste/water-storages/geelong-region
-- **Render:** Couldn't audit — 403 Forbidden via WebFetch (likely WAF).
-- **Update cadence:** Unknown. Recent news articles report combined %-full figures, suggesting a real dashboard exists.
-- **Plan:** Re-fetch with `httpx` + browser User-Agent during adapter dev. If still blocked, fall back to Playwright. If still no dashboard, news articles or annual reports may be the only public source.
+- **Public pages:** `/water-and-waste/water-storages/{geelong,colac,lorne,apollo-bay}`
+- **Render:** Pages are behind Cloudflare bot protection — the default JS-challenge interrupts plain `httpx`/`curl` requests. Sending a full Chrome-shaped header set (User-Agent, Accept-Language, `Sec-Ch-Ua*`, `Sec-Fetch-*`, `Upgrade-Insecure-Requests`) is enough to pass; this is now the default for the shared HTTP client.
+- **Endpoint used:** `GET https://www.barwonwater.vic.gov.au/_webservices/json/waterstorage?region_name={region}` — discovered in the page bootstrap as the source for the `waterStoragesTable`/`waterStoragesStats`/`waterStoragesChart` widgets.
+- **Response shape:** `reservoir_levels[]` with `location`, `present_volume`, `total_capacity`, `percentage_full` (all stringified). Each region also includes a roll-up row whose `location` ends with " total"/"Total"; the adapter skips these. Reading date is taken from the last entry of `water_storage_levels` (the actual measurement date — `date_updated` is the publish date, typically a day later).
+- **Coverage:** 11 reservoirs live (Geelong: West Barwon, Wurdee Boluc, Korweinguboora, Bostock, Stony Creek, Lal Lal share. Colac: West Gellibrand, Olangolah, No. 4 Basin, No. 5 Basin. Lorne: Allen). Apollo Bay's endpoint currently returns a backend-error envelope; the adapter tolerates this and skips the region.
+- **Notes:** Lal Lal is shared with Central Highlands Water — the published row shows Barwon's 16,793 ML share only, not the whole reservoir. Avoid double-counting when CHW's adapter lands.
 
 ## 4. GWMWater ✅ (implemented)
 
@@ -132,7 +134,7 @@ Build easiest-first to derisk the framework, then tackle harder ones:
 | 1 | Goulburn-Murray Water | ✅ Done | Parse static HTML table at `/water-operations/storage-levels` |
 | 2 | Melbourne Water | ✅ Done | Public JSON API at `api.melbournewater.com.au/water-storage/levels/day` |
 | 3 | GWMWater | ✅ Done | Static HTML `table.bwmtable` on summary page |
-| 4 | Barwon Water | ❓ TBD | httpx + real UA; if blocked, Playwright |
+| 4 | Barwon Water | ✅ Done | Public JSON web service `/_webservices/json/waterstorage?region_name=…` (Cloudflare needs Chrome-shaped headers — now default in shared client) |
 | 5 | Central Highlands Water | ❓ TBD | httpx + real UA |
 | 6 | Southern Rural Water | 🟡 Med | XHR inspection; watch for MySRW decommission |
 | 7 | Coliban Water | 🔴 Hard | BOM KiWIS API (their own page is stale) |

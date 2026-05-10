@@ -1,0 +1,78 @@
+{
+  "weekly_consumption": "64.3",
+  "overall_storage": "65.3",
+  "region_name": "Colac region water storages",
+  "date_updated": "May, 10 2026 00:00:00",
+  "water_storage_levels": [
+    {
+      "date": "May, 05 2026 00:00:00",
+      "storage_total": "1616.1",
+      "percentage_full": "61.4"
+    },
+    {
+      "date": "May, 06 2026 00:00:00",
+      "storage_total": "1634.1",
+      "percentage_full": "62.1"
+    },
+    {
+      "date": "May, 07 2026 00:00:00",
+      "storage_total": "1678.2",
+      "percentage_full": "63.8"
+    },
+    {
+      "date": "May, 08 2026 00:00:00",
+      "storage_total": "1706.5",
+      "percentage_full": "64.9"
+    },
+    {
+      "date": "May, 09 2026 00:00:00",
+      "storage_total": "1717.9",
+      "percentage_full": "65.3"
+    }
+  ],
+  "weekly_rainfall": "71",
+  "last_year": "56.1",
+  "weekly_storage_change": "+4.3",
+  "reservoir_levels": [
+    {
+      "location": "West Gellibrand Reservoir",
+      "weekly_variation": "+84",
+      "present_volume": "979",
+      "total_capacity": "1860",
+      "same_time_last_year": "989",
+      "percentage_full": "52.6"
+    },
+    {
+      "location": "Olangolah Reservoir",
+      "weekly_variation": "+31",
+      "present_volume": "129",
+      "total_capacity": "129",
+      "same_time_last_year": "76",
+      "percentage_full": "100"
+    },
+    {
+      "location": "No. 4 Basin, Colac",
+      "weekly_variation": "-5",
+      "present_volume": "179",
+      "total_capacity": "192",
+      "same_time_last_year": "147",
+      "percentage_full": "93.1"
+    },
+    {
+      "location": "No. 5 Basin, Colac",
+      "weekly_variation": "+3",
+      "present_volume": "432",
+      "total_capacity": "450",
+      "same_time_last_year": "264",
+      "percentage_full": "95.9"
+    },
+    {
+      "location": "Colac Total",
+      "weekly_variation": "+114",
+      "present_volume": "1718",
+      "total_capacity": "2631",
+      "same_time_last_year": "1476",
+      "percentage_full": "65.3"
+    }
+  ]
+}

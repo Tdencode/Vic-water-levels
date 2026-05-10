@@ -1,0 +1,48 @@
+
+{
+  "body": "CUSTOM ERROR PAGE<HR>\r\n\r\n",
+  "headers": {
+    "Date": "Sun, 10 May 2026 00:58:13 GMT",
+    "Server": "Apache",
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+    "Transfer-Encoding": "chunked",
+    "Content-Type": "text/html;charset=UTF-8"
+  },
+  "info": {
+    "url": "https://www2.barwonwater.vic.gov.au/cp/waterStorage?region_name=apollo-bay",
+    "content_type": "text/html;charset=UTF-8",
+    "http_code": 200,
+    "header_size": 212,
+    "request_size": 231,
+    "filetime": -1,
+    "ssl_verify_result": 0,
+    "redirect_count": 0,
+    "total_time": 0.154376,
+    "namelookup_time": 0.000473,
+    "connect_time": 0.018289,
+    "pretransfer_time": 0.123419,
+    "size_upload": 0,
+    "size_download": 25,
+    "speed_download": 161,
+    "speed_upload": 0,
+    "download_content_length": -1,
+    "upload_content_length": 0,
+    "starttransfer_time": 0.154281,
+    "redirect_time": 0,
+    "redirect_url": "",
+    "primary_ip": "203.38.216.231",
+    "certinfo": [],
+    "primary_port": 443,
+    "local_ip": "10.164.0.39",
+    "local_port": 48246
+  },
+  "source": "remote",
+  "expiry": 0,
+  "bodyx": "CUSTOM ERROR PAGE<HR>\r\n\r\n",
+  "request": {
+    "method": "GET",
+    "url": "https://www2.barwonwater.vic.gov.au/cp/waterStorage?region_name=apollo-bay",
+    "body": ""
+  },
+  "resultType": "error"
+}
