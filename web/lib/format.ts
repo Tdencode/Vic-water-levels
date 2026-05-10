@@ -23,18 +23,19 @@ export function formatDate(iso: string | null | undefined): string {
 }
 
 // Map a percent-full to a Tailwind colour class for the progress bar fill.
-// We use the same thresholds for the bar and the badge so the UI reads
-// consistently: red below 30, amber 30-70, blue/green above 70.
+// Same thresholds for the bar and the badge so the UI reads consistently:
+// red < 30, amber 30-70, sky >= 70. Vibrant fill colours read fine on
+// either background; only the muted "no data" track needs a dark variant.
 export function fillColorClass(pct: number | null | undefined): string {
-  if (pct == null) return "bg-slate-300";
+  if (pct == null) return "bg-slate-300 dark:bg-slate-700";
   if (pct < 30) return "bg-red-500";
   if (pct < 70) return "bg-amber-500";
   return "bg-sky-500";
 }
 
 export function fillTextClass(pct: number | null | undefined): string {
-  if (pct == null) return "text-slate-500";
-  if (pct < 30) return "text-red-700";
-  if (pct < 70) return "text-amber-700";
-  return "text-sky-700";
+  if (pct == null) return "text-slate-500 dark:text-slate-400";
+  if (pct < 30) return "text-red-700 dark:text-red-400";
+  if (pct < 70) return "text-amber-700 dark:text-amber-400";
+  return "text-sky-700 dark:text-sky-400";
 }

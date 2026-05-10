@@ -8,6 +8,7 @@ import {
 } from "@/lib/format";
 import StorageTable from "./StorageTable";
 import type { LatestReading } from "@/lib/types";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Re-render at most every hour. The scraper only writes once a day, so
 // hourly is plenty fresh and keeps PostgREST quiet.
@@ -27,23 +28,28 @@ export default async function HomePage() {
   const totals = computeStatewideTotals(readings);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-          Victorian Water Storage Levels
-        </h1>
-        <p className="mt-3 text-base text-slate-600">
-          Daily storage levels for {totals.storageCount} reservoirs across{" "}
-          {totals.companyCount} water corporations.{" "}
-          {totals.latestReadingDate && (
-            <>Last reading {formatDate(totals.latestReadingDate)}.</>
-          )}
-        </p>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <header className="mb-8 sm:mb-10">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl dark:text-slate-50">
+              Victorian Water Storage Levels
+            </h1>
+            <p className="mt-2 text-sm text-slate-600 sm:mt-3 sm:text-base dark:text-slate-400">
+              Daily levels for {totals.storageCount} reservoirs across{" "}
+              {totals.companyCount} water corporations.
+              {totals.latestReadingDate && (
+                <> Last reading {formatDate(totals.latestReadingDate)}.</>
+              )}
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
       </header>
 
       <section
         aria-label="Statewide totals"
-        className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3"
+        className="mb-10 grid grid-cols-1 gap-3 sm:mb-12 sm:grid-cols-3 sm:gap-4"
       >
         <StatCard
           label="Statewide stored"
@@ -62,10 +68,10 @@ export default async function HomePage() {
 
       <StorageTable readings={readings} />
 
-      <footer className="mt-16 border-t border-slate-200 pt-6 text-sm text-slate-500">
+      <footer className="mt-12 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:mt-16 sm:text-sm dark:border-slate-800 dark:text-slate-500">
         <p>
           Data scraped daily from the seven Victorian water corporations.
-          Volumes shown in megalitres (ML) / gigalitres (GL).
+          Volumes shown in megalitres (ML) / gigalitres (GL) / teralitres (TL).
         </p>
       </footer>
     </main>
@@ -82,11 +88,13 @@ function StatCard({
   accentClass?: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 sm:text-sm dark:text-slate-400">
+        {label}
+      </p>
       <p
-        className={`mt-2 text-2xl font-semibold tracking-tight ${
-          accentClass ?? "text-slate-900"
+        className={`mt-1 text-xl font-semibold tracking-tight sm:mt-2 sm:text-2xl ${
+          accentClass ?? "text-slate-900 dark:text-slate-50"
         }`}
       >
         {value}
