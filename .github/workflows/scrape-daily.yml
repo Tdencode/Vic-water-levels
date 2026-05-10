@@ -45,8 +45,10 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          ARGS=""
-          if [ -n "${{ inputs.company }}" ]; then ARGS="$ARGS --company ${{ inputs.company }}"; fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
-          python -m scrapers.runner $ARGS
+        # Inline both flags as GitHub expressions: empty when the input is
+        # blank/false, fully formed when set. Avoids fragile in-bash
+        # conditionals around ${{ ... }} substitution.
+        run: >-
+          python -m scrapers.runner
+          ${{ inputs.company && format('--company {0}', inputs.company) || '' }}
+          ${{ inputs.dry_run && '--dry-run' || '' }}
