@@ -18,6 +18,7 @@ import {
   formatVolume,
 } from "@/lib/format";
 import { compareNullsLast, sortBy, type SortDir } from "@/lib/sort";
+import { downloadCsv, rowsToCsv, todayIsoDate } from "@/lib/csv";
 import type { CompanyGroup, LatestReading } from "@/lib/types";
 
 type View = "storages" | "regions";
@@ -187,6 +188,52 @@ export default function StorageTable({
     }
   }
 
+  // Export the rows currently visible (filtered + sorted) for whichever
+  // view is active. Volumes are written in raw ML so spreadsheets can do
+  // their own math; the on-screen GL/TL formatting is presentation only.
+  function exportCsv() {
+    const date = todayIsoDate();
+    if (view === "storages") {
+      const headers = [
+        "Storage",
+        "Region",
+        "% Full",
+        "Volume (ML)",
+        "Capacity (ML)",
+        "Reading Date",
+        "Source URL",
+      ];
+      const rows = sortedStorages.map((r) => [
+        r.storage_name,
+        r.company_name,
+        r.percent_full,
+        r.volume_ml,
+        r.capacity_ml,
+        r.reading_date,
+        r.source_url ?? "",
+      ]);
+      downloadCsv(`vic-water-storages-${date}.csv`, rowsToCsv(headers, rows));
+    } else {
+      const headers = [
+        "Region",
+        "Storage Count",
+        "Total Volume (ML)",
+        "Total Capacity (ML)",
+        "% Full",
+        "Latest Reading",
+      ];
+      const rows = sortedRegions.map((r) => [
+        r.name,
+        r.storages.length,
+        r.totalVolumeMl,
+        r.totalCapacityMl,
+        r.percentFull,
+        r.latestReadingDate ?? "",
+      ]);
+      downloadCsv(`vic-water-regions-${date}.csv`, rowsToCsv(headers, rows));
+    }
+  }
+
   return (
     <section aria-label="Storage table" className="mb-12">
       <Controls
@@ -200,6 +247,10 @@ export default function StorageTable({
         selectedCompanies={companies}
         toggleCompany={toggleCompany}
         clearCompanies={() => setCompanies(new Set())}
+        onExport={exportCsv}
+        exportCount={
+          view === "storages" ? sortedStorages.length : sortedRegions.length
+        }
       />
       <div className="-mx-4 mt-4 overflow-x-auto sm:mx-0">
         {view === "storages" ? (
@@ -240,6 +291,8 @@ function Controls({
   selectedCompanies,
   toggleCompany,
   clearCompanies,
+  onExport,
+  exportCount,
 }: {
   view: View;
   setView: (v: View) => void;
@@ -251,6 +304,8 @@ function Controls({
   selectedCompanies: Set<string>;
   toggleCompany: (slug: string) => void;
   clearCompanies: () => void;
+  onExport: () => void;
+  exportCount: number;
 }) {
   return (
     // Stack on mobile (search on its own row, then the filter chips wrap
@@ -321,8 +376,42 @@ function Controls({
             );
           })}
         </div>
+        <button
+          type="button"
+          onClick={onExport}
+          disabled={exportCount === 0}
+          aria-label={
+            view === "storages"
+              ? `Download ${exportCount} storages as CSV`
+              : `Download ${exportCount} regions as CSV`
+          }
+          title="Download current view as CSV"
+          className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        >
+          <DownloadIcon />
+          <span>CSV</span>
+        </button>
       </div>
     </div>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="h-3.5 w-3.5"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M12 15V3" />
+    </svg>
   );
 }
 
