@@ -126,14 +126,48 @@ class BarwonWaterAdapter(BaseAdapter):
     company_name = COMPANY_NAME
     source_url = PAGE_BASE
 
+    # Try newer Chrome impersonation profiles first; fall back to older
+    # ones if Cloudflare's fingerprint database has caught up to a profile.
+    _IMPERSONATE_PROFILES = ("chrome131", "chrome124", "chrome120")
+
     def fetch(self) -> list[Reading]:
-        readings: list[Reading] = []
         # See module docstring for why this adapter doesn't use self._client.
-        with cffi_requests.Session(impersonate="chrome124") as session:
+        last_error: Exception | None = None
+        for profile in self._IMPERSONATE_PROFILES:
+            try:
+                return self._fetch_with(profile)
+            except Exception as exc:
+                last_error = exc
+                continue
+        # Re-raise the final error so the runner records the adapter failure.
+        if last_error is not None:
+            raise last_error
+        return []
+
+    def _fetch_with(self, profile: str) -> list[Reading]:
+        readings: list[Reading] = []
+        with cffi_requests.Session(impersonate=profile) as session:
+            # Warmup: hit the public storage page first. On some Cloudflare
+            # configs this returns a cf_clearance cookie that the API
+            # endpoint then accepts — even when a bare API call from the
+            # same IP is rejected.
+            try:
+                session.get(f"{PAGE_BASE}/geelong", timeout=30)
+            except Exception:
+                # Warmup is best-effort; if the page itself blocks, the
+                # API call below may still succeed (or fail with a
+                # cleaner error we can act on).
+                pass
+
             for region in REGIONS:
                 response = session.get(
                     API_BASE,
                     params={"region_name": region},
+                    headers={
+                        "Accept": "application/json,*/*;q=0.8",
+                        "Referer": f"{PAGE_BASE}/{region}",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
                     timeout=30,
                 )
                 response.raise_for_status()
