@@ -64,13 +64,14 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
 - **Update cadence:** Unknown. Recent news articles report combined %-full figures, suggesting a real dashboard exists.
 - **Plan:** Re-fetch with `httpx` + browser User-Agent during adapter dev. If still blocked, fall back to Playwright. If still no dashboard, news articles or annual reports may be the only public source.
 
-## 4. GWMWater 🟡
+## 4. GWMWater ✅ (implemented)
 
-- **Page:** https://www.gwmwater.org.au/reservoir-levels-and-other-information/reservoir-levels
-- **Summary page:** https://www.gwmwater.org.au/component/content/article/52-reservoir-level-summary?Itemid=253
-- **Render:** Static HTML, but the parent URL only describes the system; actual data lives on the summary page (need to fetch that next).
-- **Update cadence:** **Weekly** — Thursday-to-Wednesday window, uploaded Wednesday afternoon. Daily scrape will be wasteful → de-dupe by `(storage_id, reading_date)` is essential.
-- **Plan:** Fetch the summary page directly. Parse table.
+- **Public page:** https://www.gwmwater.org.au/reservoir-levels-and-other-information/reservoirs-level-summary
+- **Render:** Static HTML — single `<table class="bwmtable">` with rows per reservoir and a "Total supply" footer row that we skip.
+- **Reading date:** parsed from the `<h3 class="table_updated">Updated as of DD MMM YYYY</h3>` header.
+- **Columns used:** Reservoir Name (col 0), Contents when full ML (col 2), Current contents ML (col 4), Current percent full (col 5).
+- **Update cadence:** **Weekly** — Thursday-to-Wednesday window, uploaded Wednesday afternoon. Daily cron is still fine — `UNIQUE(storage_id, reading_date)` makes mid-week pulls a no-op.
+- **Coverage:** All 10 reservoirs (Bellfield, Fyans, Lonsdale, Moora Moora, Rocklands, Taylors Lake, Toolondo, Wartook, Mt Cole, Green Lake). Green Lake is suffixed `^` on the page (footnoted as excluded from totals); the adapter strips the caret to keep slug stable.
 
 ## 5. Coliban Water 🔴
 
@@ -130,7 +131,7 @@ Build easiest-first to derisk the framework, then tackle harder ones:
 |---|---------|------------|-----------------|
 | 1 | Goulburn-Murray Water | ✅ Done | Parse static HTML table at `/water-operations/storage-levels` |
 | 2 | Melbourne Water | ✅ Done | Public JSON API at `api.melbournewater.com.au/water-storage/levels/day` |
-| 3 | GWMWater | 🟡 Med | Static HTML on summary page (de-dupe weekly) |
+| 3 | GWMWater | ✅ Done | Static HTML `table.bwmtable` on summary page |
 | 4 | Barwon Water | ❓ TBD | httpx + real UA; if blocked, Playwright |
 | 5 | Central Highlands Water | ❓ TBD | httpx + real UA |
 | 6 | Southern Rural Water | 🟡 Med | XHR inspection; watch for MySRW decommission |
