@@ -1,0 +1,248 @@
+<!DOCTYPE html><html><body><div class="chw-water-storage-level-detail__header">
+                    <div class="chw-water-storage-level-detail__header__text">
+                        <h3>Ballarat system storages</h3>
+                        <div>CHW Reservoir Water Storages, as at 05 May 2026</div>
+                    </div>
+                    <div class="chw-button-tabs">
+                        <input id="data-format0" type="radio" name="data-format" class="chw-button-tabs__radio" value="table"
+                               onclick="document.getElementById('graph-view').style.display='none'; document.getElementById('table-view').style.display='block'">
+                        <label tabindex="0" for="data-format0" class="chw-button-tabs__label button button--primary--hollow">Table</label>
+                        <input id="data-format1" type="radio" name="data-format" class="chw-button-tabs__radio" value="graph"
+                               onclick="document.getElementById('graph-view').style.display='block'; document.getElementById('table-view').style.display='none'">
+                        <label tabindex="0" for="data-format1" class="chw-button-tabs__label button button--secondary">Graph</label>
+                    </div>
+<div class="overflow-responsive wysiwyg-content" style="display:none" id="table-view">
+                    <div class="overflow-responsive__container">
+                        <div class="chw-data-graph overflow-responsive__content">
+                            <table class="chw-data-table overflow-responsive__content">
+                                <thead class="chw-data-table__head">
+                                    <tr class="chw-data-table__head__row">
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Reservoir</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Total Capacity</div>
+                                            <div class="chw-data-table__head__cell__subheader">(ML)</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Current Volume</div>
+                                            <div class="chw-data-table__head__cell__subheader">(ML)</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Current Volume</div>
+                                            <div class="chw-data-table__head__cell__subheader">(% full)</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Last Year's Volume</div>
+                                            <div class="chw-data-table__head__cell__subheader">(% full)</div>
+                                        </td>
+                                    </tr>
+                                </thead>
+
+                                <tbody class="chw-data-table__body">
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Ballarat Total </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 60594 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 27401 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 45% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 49% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Lal Lal Reservoir (CHW) </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 35670 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 17576 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 49% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 61% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Lal Lal Reservoir (Total) </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 59549 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 26147 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 44% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 55% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> White Swan Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 14107 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 6388 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 45% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 34% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Moorabool Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 6192 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 2006 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 32% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 32% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Gong Gong Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 1902 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 315 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 17% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 14% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Wilsons Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 1010 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 148 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 15% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 5% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Cosgrave Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 680 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 83 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 12% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 25% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Beales Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 415 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 62 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 15% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 3% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Kirks Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 400 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 357 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 89% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 85% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Pincotts Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 218 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 133 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 61% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 44% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Newlyn Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 500 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 334 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 67% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 29% </div>
+                                            </td>
+                                        </tr>
+                                </tbody>
+                            </table></div></div></body></html>

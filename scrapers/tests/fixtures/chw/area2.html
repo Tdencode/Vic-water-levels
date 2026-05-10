@@ -1,0 +1,112 @@
+<!DOCTYPE html><html><body><div class="chw-water-storage-level-detail__header">
+                    <div class="chw-water-storage-level-detail__header__text">
+                        <h3>Daylesford system storages</h3>
+                        <div>CHW Reservoir Water Storages, as at 05 May 2026</div>
+                    </div>
+                    <div class="chw-button-tabs">
+                        <input id="data-format0" type="radio" name="data-format" class="chw-button-tabs__radio" value="table"
+                               onclick="document.getElementById('graph-view').style.display='none'; document.getElementById('table-view').style.display='block'">
+                        <label tabindex="0" for="data-format0" class="chw-button-tabs__label button button--primary--hollow">Table</label>
+                        <input id="data-format1" type="radio" name="data-format" class="chw-button-tabs__radio" value="graph"
+                               onclick="document.getElementById('graph-view').style.display='block'; document.getElementById('table-view').style.display='none'">
+                        <label tabindex="0" for="data-format1" class="chw-button-tabs__label button button--secondary">Graph</label>
+                    </div>
+<div class="overflow-responsive wysiwyg-content" style="display:none" id="table-view">
+                    <div class="overflow-responsive__container">
+                        <div class="chw-data-graph overflow-responsive__content">
+                            <table class="chw-data-table overflow-responsive__content">
+                                <thead class="chw-data-table__head">
+                                    <tr class="chw-data-table__head__row">
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Reservoir</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Total Capacity</div>
+                                            <div class="chw-data-table__head__cell__subheader">(ML)</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Current Volume</div>
+                                            <div class="chw-data-table__head__cell__subheader">(ML)</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Current Volume</div>
+                                            <div class="chw-data-table__head__cell__subheader">(% full)</div>
+                                        </td>
+                                        <td class="chw-data-table__head__cell">
+                                            <div class="chw-data-table__head__cell__header">Last Year's Volume</div>
+                                            <div class="chw-data-table__head__cell__subheader">(% full)</div>
+                                        </td>
+                                    </tr>
+                                </thead>
+
+                                <tbody class="chw-data-table__body">
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Daylesford Total </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 795 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 583 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 73% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 39% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Wombat Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 548 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 404 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 74% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 44% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Bullarto Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 219 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 150 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 68% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 21% </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="chw-data-table__body__row">
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> Hepburn Reservoir </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 28 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 28 </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 100% </div>
+                                            </td>
+                                            <td class="chw-data-table__body__cell">
+                                                <div class="chw-data-table__body__cell__content"> 89% </div>
+                                            </td>
+                                        </tr>
+                                </tbody>
+                            </table></div></div></body></html>

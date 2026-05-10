@@ -93,11 +93,14 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
 - **⚠️ Risk:** SRW page mentions the **MySRW platform will be decommissioned in May 2026** (this month) and data is moving to a "Prices and Forms" page. Need to monitor this.
 - **Plan:** Investigate XHR calls or scrape per-storage pages.
 
-## 7. Central Highlands Water ❓ (proposed swap)
+## 7. Central Highlands Water ✅ (implemented)
 
-- **Page:** https://www.chw.net.au/community/water-storage-levels
-- **Render:** Couldn't audit — 403 to WebFetch.
-- **Plan:** Re-check with httpx + real UA during adapter dev.
+- **Public page:** https://www.chw.net.au/community/water-storage-levels (with `?Area=N` for N=0..3)
+- **Render:** Static HTML behind Cloudflare. Same Chrome-shaped header set added for Barwon passes the JS challenge here too.
+- **Areas:** 0=Ballarat, 1=Maryborough, 2=Daylesford, 3=Regional. Each renders one `<table class="chw-data-table">` preceded by a header `<div>CHW Reservoir Water Storages, as at DD MMM YYYY</div>` (used as the reading date).
+- **Total-row handling:** rows whose name ends with the word `Total` (or `(Total)`) are skipped — covers `Ballarat Total`, `Maryborough Total`, `Daylesford Total`, and the `Lal Lal Reservoir (Total)` whole-reservoir aggregate.
+- **Coverage:** 25 reservoirs across all 4 areas, including CHW's 35,670 ML Lal Lal share (`Lal Lal Reservoir (CHW)`).
+- **Lal Lal de-duplication:** CHW's row and Barwon Water's share row have distinct slugs (`lal-lal-reservoir-chw` vs `lal-lal-reservoir-barwon-water-s-share`), so the two adapters can both run without double-counting. The whole-reservoir total row on CHW's page is filtered out.
 
 ---
 
@@ -135,7 +138,7 @@ Build easiest-first to derisk the framework, then tackle harder ones:
 | 2 | Melbourne Water | ✅ Done | Public JSON API at `api.melbournewater.com.au/water-storage/levels/day` |
 | 3 | GWMWater | ✅ Done | Static HTML `table.bwmtable` on summary page |
 | 4 | Barwon Water | ✅ Done | Public JSON web service `/_webservices/json/waterstorage?region_name=…` (Cloudflare needs Chrome-shaped headers — now default in shared client) |
-| 5 | Central Highlands Water | ❓ TBD | httpx + real UA |
+| 5 | Central Highlands Water | ✅ Done | Static HTML across 4 area pages (`?Area=0..3`); Cloudflare-gated, handled by shared headers |
 | 6 | Southern Rural Water | 🟡 Med | XHR inspection; watch for MySRW decommission |
 | 7 | Coliban Water | 🔴 Hard | BOM KiWIS API (their own page is stale) |
 
