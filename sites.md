@@ -75,15 +75,14 @@ Our initial best-guess list mixed bulk water managers (who own the storages) wit
 - **Update cadence:** **Weekly** — Thursday-to-Wednesday window, uploaded Wednesday afternoon. Daily cron is still fine — `UNIQUE(storage_id, reading_date)` makes mid-week pulls a no-op.
 - **Coverage:** All 10 reservoirs (Bellfield, Fyans, Lonsdale, Moora Moora, Rocklands, Taylors Lake, Toolondo, Wartook, Mt Cole, Green Lake). Green Lake is suffixed `^` on the page (footnoted as excluded from totals); the adapter strips the caret to keep slug stable.
 
-## 5. Coliban Water 🔴
+## 5. Coliban Water ✅ (implemented)
 
-- **Page:** https://coliban.com.au/water-storage-data-and-information
-- **Render:** Static HTML, **but data is stale (last updated Aug 2021).** The page itself directs users to BOM dashboards for current numbers.
-- **Reservoirs mentioned:** Upper Coliban, Lauriston, Malmsbury, McCay, Barkers Creek, Sandhurst, Spring Gully (no current values).
-- **External sources cited:**
-  - BOM Water Storages: `https://www.bom.gov.au/water/dashboards/#/water-storages/sites/state?storage=Malmsbury`
-  - DEECA WMIS: `https://data.water.vic.gov.au/`
-- **Plan:** Don't scrape coliban.com.au. Use BOM Water Data Online (KiWIS API) instead — see "BOM aggregator" below.
+- **Pages:** `https://coliban.com.au/about-us/our-reservoirs/{slug}/levels` for the 4 main reservoirs (Malmsbury, Lauriston, Upper Coliban, Lake Eppalock). The older `water-storage-data-and-information` page is stale (Aug 2021) — the per-reservoir pages under `/about-us/our-reservoirs` are the live ones.
+- **Endpoint used:** `POST https://webserver.coliban.com.au/ResLevelsService/webplace.asmx/WaterStorageLevels` with JSON body `{"to","from","reservoir","granularity":"day"}`. Legacy ASP.NET ASMX, so the response wraps real JSON inside a top-level `"d"` string field.
+- **Reservoir param:** free-text reservoir name from each chart's `data-params` attribute, **not** the URL slug — e.g. `upper coliban` (with space) for Upper Coliban Reservoir. Sending an unknown name silently returns the *combined* catchment numbers, so the slug→param map is hardcoded with a no-duplicate test.
+- **Update cadence:** Malmsbury, Lauriston, Upper Coliban update daily; Lake Eppalock updates weekly. Adapter requests a 14-day window and reads the last entry of `waterStorageVolumes` so each reservoir reports its actual freshest reading.
+- **Field-naming trap:** `waterStorageTotals.currentCapacity` is misleadingly the *current volume*; capacity lives in `totalCapacity`. The adapter reads volume + percent from the per-reading entry to avoid the trap.
+- **Coverage:** 4 main Coliban reservoirs. Coliban operates ~35 storages overall but only these 4 have public live pages. Coliban's Lake Eppalock figure is their share (~55 GL) and coexists with G-MW's full-reservoir reading under different `company_slug`/`storage_slug` keys — no row collision.
 
 ## 6. Southern Rural Water ✅ (implemented)
 
@@ -142,7 +141,7 @@ Build easiest-first to derisk the framework, then tackle harder ones:
 | 4 | Barwon Water | ✅ Done | Public JSON web service `/_webservices/json/waterstorage?region_name=…` (Cloudflare needs Chrome-shaped headers — now default in shared client) |
 | 5 | Central Highlands Water | ✅ Done | Static HTML across 4 area pages (`?Area=0..3`); Cloudflare-gated, handled by shared headers |
 | 6 | Southern Rural Water | ✅ Done | POST `/graphs/storage-chart/get-chart-data?reservoir=N` per per-storage page; walk Highcharts series backwards past trailing zero-padding |
-| 7 | Coliban Water | 🔴 Hard | BOM KiWIS API (their own page is stale) |
+| 7 | Coliban Water | ✅ Done | POST `webserver.coliban.com.au/ResLevelsService/webplace.asmx/WaterStorageLevels` per reservoir; ASMX `{"d":"<json>"}` envelope |
 
 ---
 
