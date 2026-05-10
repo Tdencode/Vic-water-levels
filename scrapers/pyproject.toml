@@ -5,6 +5,7 @@ description = "Daily scrapers for Victorian water corporation storage levels"
 requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.27",
+    "curl-cffi>=0.7",
     "selectolax>=0.3.21",
     "supabase>=2.5",
     "python-dateutil>=2.9",

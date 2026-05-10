@@ -5,13 +5,16 @@ pages at ``/water-and-waste/water-storages/<region>``. Discovered by reading
 the inline page bootstrap which references
 ``_webservices/json/waterstorage?region_name=<region>``.
 
-The site sits behind Cloudflare bot protection; the shared HTTP client in
-``scrapers.base`` already sends the Chrome-shaped header set required to pass
-the JS challenge.
+Cloudflare WAF on this site fingerprints the TLS handshake (JA3 hash), not
+just HTTP headers — Python's stdlib SSL gets blocked from datacentre IPs
+(GitHub Actions runners) even with Chrome-shaped HTTP headers. Locally
+from residential IPs the bare httpx client passes; from CI it 403s. We
+use ``curl_cffi`` (libcurl-impersonate) to mimic Chrome's TLS fingerprint
+for just this adapter — the other six adapters stay on httpx.
 
 Four regions exist (Geelong, Colac, Lorne, Apollo Bay). At time of writing
 the Apollo Bay endpoint returns a backend-error envelope (no reservoir data
-published); the adapter logs and skips that region.
+published); the parser logs and skips that region.
 """
 
 from __future__ import annotations
@@ -19,6 +22,8 @@ from __future__ import annotations
 import re
 from datetime import date, datetime
 from typing import Any
+
+from curl_cffi import requests as cffi_requests
 
 from scrapers.base import BaseAdapter, Reading
 
@@ -123,12 +128,18 @@ class BarwonWaterAdapter(BaseAdapter):
 
     def fetch(self) -> list[Reading]:
         readings: list[Reading] = []
-        for region in REGIONS:
-            response = self._client.get(API_BASE, params={"region_name": region})
-            response.raise_for_status()
-            try:
-                payload = response.json()
-            except ValueError:
-                continue
-            readings.extend(parse_region(payload, region))
+        # See module docstring for why this adapter doesn't use self._client.
+        with cffi_requests.Session(impersonate="chrome124") as session:
+            for region in REGIONS:
+                response = session.get(
+                    API_BASE,
+                    params={"region_name": region},
+                    timeout=30,
+                )
+                response.raise_for_status()
+                try:
+                    payload = response.json()
+                except ValueError:
+                    continue
+                readings.extend(parse_region(payload, region))
         return readings
