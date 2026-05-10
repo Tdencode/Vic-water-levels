@@ -5,12 +5,26 @@ pages at ``/water-and-waste/water-storages/<region>``. Discovered by reading
 the inline page bootstrap which references
 ``_webservices/json/waterstorage?region_name=<region>``.
 
-Cloudflare WAF on this site fingerprints the TLS handshake (JA3 hash), not
-just HTTP headers — Python's stdlib SSL gets blocked from datacentre IPs
-(GitHub Actions runners) even with Chrome-shaped HTTP headers. Locally
-from residential IPs the bare httpx client passes; from CI it 403s. We
-use ``curl_cffi`` (libcurl-impersonate) to mimic Chrome's TLS fingerprint
-for just this adapter — the other six adapters stay on httpx.
+Cloudflare blocking
+-------------------
+The site is fronted by Cloudflare, which combines TLS fingerprinting (JA3)
+with IP-reputation filtering. From residential IPs the call works fine.
+From datacentre IPs (GitHub Actions, AWS, Azure, GCP) the API endpoint
+returns HTTP 403 even with libcurl-impersonate Chrome handshakes and a
+cookie warmup. The public HTML pages don't carry inline values either —
+they XHR the same blocked endpoint client-side.
+
+Resolution: the adapter still tries hard (warmup + chrome131/124/120
+fallback), but **403s are treated as "unavailable from this network"
+rather than a failure**. The runner records it as a 0-row scrape, the
+overall job stays green, and existing Barwon rows in Supabase remain
+the most recent reading. To get fresh Barwon data, run the adapter
+manually from a residential IP::
+
+    python -m scrapers.runner --company barwon-water
+
+If Cloudflare ever relaxes the block, the adapter resumes silently —
+no code change needed.
 
 Four regions exist (Geelong, Colac, Lorne, Apollo Bay). At time of writing
 the Apollo Bay endpoint returns a backend-error envelope (no reservoir data
@@ -23,9 +37,12 @@ import re
 from datetime import date, datetime
 from typing import Any
 
+import structlog
 from curl_cffi import requests as cffi_requests
 
 from scrapers.base import BaseAdapter, Reading
+
+log = structlog.get_logger()
 
 API_BASE = "https://www.barwonwater.vic.gov.au/_webservices/json/waterstorage"
 PAGE_BASE = "https://www.barwonwater.vic.gov.au/water-and-waste/water-storages"
@@ -86,6 +103,20 @@ def _extract_reading_date(payload: dict[str, Any]) -> date | None:
     return None
 
 
+def _looks_like_cloudflare_block(exc: Exception) -> bool:
+    """True for the 403 / IP-reputation pattern we want to swallow.
+
+    We deliberately match loosely: curl_cffi versions and Cloudflare error
+    payloads vary, so check both the explicit status code (when present)
+    and the stringified error for the tell-tale tokens.
+    """
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    if status in (401, 403, 429):
+        return True
+    msg = str(exc).lower()
+    return "403" in msg or "forbidden" in msg or "cloudflare" in msg
+
+
 def parse_region(payload: dict[str, Any], region: str) -> list[Reading]:
     """Pure parser for one region's JSON payload."""
     # Apollo Bay (and any region whose backend errors) returns an envelope
@@ -139,7 +170,21 @@ class BarwonWaterAdapter(BaseAdapter):
             except Exception as exc:
                 last_error = exc
                 continue
-        # Re-raise the final error so the runner records the adapter failure.
+
+        # Cloudflare's IP-reputation block (datacentre runners) is the
+        # expected failure mode here, so degrade to "no readings this run"
+        # rather than failing the whole adapter — see module docstring.
+        if last_error is not None and _looks_like_cloudflare_block(last_error):
+            log.warning(
+                "barwon_unavailable_from_network",
+                hint=(
+                    "Cloudflare is blocking this IP — most likely a "
+                    "datacentre / CI runner. Run locally from a residential "
+                    "IP to refresh Barwon data."
+                ),
+                error=str(last_error),
+            )
+            return []
         if last_error is not None:
             raise last_error
         return []

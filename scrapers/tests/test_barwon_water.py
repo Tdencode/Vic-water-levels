@@ -6,13 +6,72 @@ import json
 from datetime import date
 from pathlib import Path
 
+from unittest.mock import patch
+
 from scrapers.adapters.barwon_water import (
+    BarwonWaterAdapter,
     _is_total_row,
+    _looks_like_cloudflare_block,
     _slugify,
     parse_region,
 )
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "barwon"
+
+
+class _FakeResponse:
+    def __init__(self, status_code: int) -> None:
+        self.status_code = status_code
+
+
+class _FakeHTTPError(Exception):
+    def __init__(self, msg: str, status: int | None = None) -> None:
+        super().__init__(msg)
+        self.response = _FakeResponse(status) if status is not None else None
+
+
+def test_looks_like_cloudflare_block_detects_status_codes() -> None:
+    assert _looks_like_cloudflare_block(_FakeHTTPError("403 Forbidden", status=403))
+    assert _looks_like_cloudflare_block(_FakeHTTPError("rate limited", status=429))
+    assert _looks_like_cloudflare_block(_FakeHTTPError("auth", status=401))
+
+
+def test_looks_like_cloudflare_block_detects_message_text() -> None:
+    # Some curl_cffi errors stringify without a .response attribute.
+    assert _looks_like_cloudflare_block(Exception("HTTP Error 403: "))
+    assert _looks_like_cloudflare_block(Exception("Cloudflare challenge"))
+
+
+def test_looks_like_cloudflare_block_ignores_other_errors() -> None:
+    # Real failures (DNS, parse, etc.) must still propagate.
+    assert not _looks_like_cloudflare_block(Exception("connection refused"))
+    assert not _looks_like_cloudflare_block(_FakeHTTPError("server error", status=500))
+
+
+def test_fetch_swallows_403_and_returns_empty() -> None:
+    # When every impersonation profile returns 403, fetch() degrades to []
+    # rather than raising — keeps the daily CI run green and leaves any
+    # existing Barwon rows in Supabase as the most recent reading.
+    adapter = BarwonWaterAdapter()
+    with patch.object(
+        adapter,
+        "_fetch_with",
+        side_effect=_FakeHTTPError("HTTP Error 403: Forbidden", status=403),
+    ):
+        assert adapter.fetch() == []
+
+
+def test_fetch_propagates_non_cloudflare_errors() -> None:
+    # A genuine bug (e.g. parser crash, DNS down) should still surface so we
+    # notice it instead of silently writing zero readings forever.
+    adapter = BarwonWaterAdapter()
+    with patch.object(adapter, "_fetch_with", side_effect=ValueError("boom")):
+        try:
+            adapter.fetch()
+        except ValueError as exc:
+            assert "boom" in str(exc)
+        else:
+            raise AssertionError("expected ValueError to propagate")
 
 
 def _load(region: str) -> dict:
