@@ -69,8 +69,30 @@ export default async function HomePage() {
 
       <footer className="mt-12 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:mt-16 sm:text-sm dark:border-slate-800 dark:text-slate-500">
         <p>
-          Data scraped daily from the seven Victorian water corporations.
-          Volumes shown in megalitres (ML) / gigalitres (GL) / teralitres (TL).
+          Data scraped daily from {totals.companyCount} Victorian water
+          corporations. Volumes shown in megalitres (ML) / gigalitres (GL) /
+          teralitres (TL).
+        </p>
+        <p className="mt-2">
+          Goulburn-Murray Water readings are sourced from the{" "}
+          <a
+            href="https://waterline.g-mwater.com.au/waterstatus/"
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-slate-700 dark:hover:text-slate-300"
+          >
+            G-MW Waterline
+          </a>{" "}
+          status site and are licensed{" "}
+          <a
+            href="https://creativecommons.org/licenses/by/4.0/"
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-slate-700 dark:hover:text-slate-300"
+          >
+            CC BY 4.0
+          </a>
+          .
         </p>
       </footer>
     </main>

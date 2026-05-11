@@ -1,37 +1,75 @@
-"""Goulburn-Murray Water adapter.
+"""Goulburn-Murray Water adapter (Waterline data source).
 
-Parses the static storage-levels table at
-https://www.g-mwater.com.au/water-operations/storage-levels.
+Sources live storage levels from G-MW's Waterline status site at
+https://waterline.g-mwater.com.au/waterstatus/. This replaces the earlier
+static-table source at ``www.g-mwater.com.au/water-operations/storage-levels``
+— Waterline carries the same storages plus extras and exposes a clean per-
+station daily table.
 
-The page renders one ``<table id="...Data">`` per region (Murray, Ovens,
-Broken, Goulburn, Campaspe, Loddon, Bullarook Creek). Each row begins with a
-``<th>`` containing the storage name (linked to a per-storage detail page
-whose final URL segment is a stable slug), followed by ``<td>`` columns:
-percentage, current volume (ML), level, capacity (ML), and others we ignore.
+Two-step fetch
+--------------
+1. ``/SSR/status.shtml`` is the index. It hard-codes 26 storages across 7
+   basins (broken, campaspe, goulburn, loddon, murray, ovens, uppermurray)
+   via JS hooks::
 
-The page-level ``Last Updated: dd/mm/yyyy`` field is used as the reading date.
+      on_image_clicked('waterApp','./SSR/<basin>/storage/<id>//location_<id>.shtml')
+
+   Each adjacent ``<img title="<NAME>: ...">`` carries the storage name.
+   The page header includes a ``Time of Report: DD/MM/YYYY HH:MM AEST``
+   stamp which gives us the year for the daily-table dates (the table
+   column is ``DD-MM`` only).
+
+2. For each ``(basin, station_id)`` we fetch
+   ``/SSR/<basin>/storage/<id>//location_daily_<id>.shtml`` — a small
+   ``<table id="tableStyle7">`` with rows ``Date/Time | Observed Level (m)
+   | Calculated Volume (ML) | Percentage full (%)``. The table runs ~30 days
+   and ends with placeholder ``-`` rows for future days; the latest real
+   row is the current reading.
+
+Capacity is not in the daily table; we derive ``volume / percent * 100``
+when the percent is non-zero — algebraically identical to what the page
+would report.
+
+Storage slugs use the raw Waterline station code (e.g. ``g405259a``,
+``g10132``). These differ from the old adapter's slugs (``dartmouthdam`` etc.)
+— old rows remain in Supabase as historical records; new readings flow into
+new rows under the station-ID slugs.
 """
 
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date
+from typing import NamedTuple
 
-from selectolax.parser import HTMLParser, Node
+from selectolax.parser import HTMLParser
 
 from scrapers.base import BaseAdapter, Reading
 
-SOURCE_URL = "https://www.g-mwater.com.au/water-operations/storage-levels"
+WATERLINE_BASE = "https://waterline.g-mwater.com.au/waterstatus"
+SOURCE_URL = f"{WATERLINE_BASE}/SSR/status.shtml"
 COMPANY_SLUG = "goulburn-murray-water"
 COMPANY_NAME = "Goulburn-Murray Water"
 
-_DATE_RE = re.compile(r"\b(\d{2})/(\d{2})/(\d{4})\b")
+_INDEX_ROW_RE = re.compile(
+    r"on_image_clicked\('waterApp','\./SSR/(?P<basin>[^/]+)/storage/"
+    r"(?P<station>[^/]+)//location_[^']+\.shtml'\)\"\s*>\s*<img[^>]*"
+    r"title=\"(?P<title>[^\"]+)\""
+)
+_REPORT_TIME_RE = re.compile(r"Time of Report:.*?(\d{2})/(\d{2})/(\d{4})", re.DOTALL)
+_TRAILING_HEAD_GAUGE_RE = re.compile(r"\s+Head Gauge$")
+_TABLE_DATE_RE = re.compile(r"^(\d{2})-(\d{2})\b")
+
+
+class IndexEntry(NamedTuple):
+    basin: str
+    station_id: str
+    name: str
 
 
 def _parse_number(text: str) -> float | None:
-    """Parse a numeric cell, tolerating commas, whitespace, and empty values."""
     cleaned = text.strip().replace(",", "")
-    if not cleaned or cleaned.lower() in {"n/a", "-", "—"}:
+    if not cleaned or cleaned in {"-", "n/a", "—"}:
         return None
     try:
         return float(cleaned)
@@ -39,73 +77,108 @@ def _parse_number(text: str) -> float | None:
         return None
 
 
-def _slug_from_href(href: str) -> str | None:
-    """Slug is the final path segment of the per-storage detail link."""
-    if not href:
+def _clean_storage_name(title: str) -> str:
+    # Title format: "<NAME>: 1 hr rainfall total" — the suffix after the
+    # colon is the icon's hover text, not part of the storage name.
+    name = title.split(":", 1)[0].strip()
+    # "Lake Eppalock Head Gauge" → "Lake Eppalock". Only strip when it's
+    # the trailing token so "Yarrawonga Weir (Mulwala Head Gauge)" survives.
+    name = _TRAILING_HEAD_GAUGE_RE.sub("", name).strip()
+    if name.endswith(" Res"):
+        name = name[:-4] + " Reservoir"
+    return name
+
+
+def parse_index(html: str) -> tuple[date, list[IndexEntry]]:
+    """Return ``(report_date, [storage_entries])`` from ``status.shtml``."""
+    m = _REPORT_TIME_RE.search(html)
+    if not m:
+        raise ValueError("G-MW Waterline: could not find 'Time of Report' stamp")
+    day, month, year = m.groups()
+    report_date = date(int(year), int(month), int(day))
+
+    seen: set[str] = set()
+    entries: list[IndexEntry] = []
+    for match in _INDEX_ROW_RE.finditer(html):
+        sid = match.group("station")
+        if sid in seen:
+            continue
+        seen.add(sid)
+        entries.append(
+            IndexEntry(
+                basin=match.group("basin"),
+                station_id=sid,
+                name=_clean_storage_name(match.group("title")),
+            )
+        )
+    return report_date, entries
+
+
+def parse_daily(
+    html: str, report_date: date
+) -> tuple[date, float | None, float | None] | None:
+    """Return ``(reading_date, volume_ml, percent_full)`` for the latest real row.
+
+    Returns ``None`` if the table has no parseable data row (e.g. the station
+    page is empty). The trailing ``-`` placeholder rows the page leaves for
+    future days are skipped.
+    """
+    tree = HTMLParser(html)
+    rows = tree.css("table#tableStyle7 tr")
+    latest: tuple[date, float | None, float | None] | None = None
+    for row in rows:
+        cells = row.css("td")
+        if len(cells) < 4:
+            continue
+        m = _TABLE_DATE_RE.match(cells[0].text(strip=True))
+        if not m:
+            continue
+        volume_ml = _parse_number(cells[2].text())
+        percent_full = _parse_number(cells[3].text())
+        if volume_ml is None and percent_full is None:
+            continue
+        day, month = int(m.group(1)), int(m.group(2))
+        # Daily series rows span ~30 days and can cross a year boundary
+        # (Dec→Jan). Pick the year that keeps the row on or before the
+        # report date.
+        reading_date = date(report_date.year, month, day)
+        if reading_date > report_date:
+            reading_date = date(report_date.year - 1, month, day)
+        latest = (reading_date, volume_ml, percent_full)
+    return latest
+
+
+def build_reading(
+    entry: IndexEntry, daily_html: str, report_date: date
+) -> Reading | None:
+    parsed = parse_daily(daily_html, report_date)
+    if parsed is None:
         return None
-    parts = [p for p in href.rstrip("/").split("/") if p]
-    return parts[-1] if parts else None
-
-
-def _extract_reading_date(tree: HTMLParser) -> date:
-    node = tree.css_first(".lastUpdated .value")
-    if node is None:
-        raise ValueError("G-MW: could not find .lastUpdated .value on page")
-    match = _DATE_RE.search(node.text())
-    if match is None:
-        raise ValueError(f"G-MW: unparseable last-updated value: {node.text()!r}")
-    day, month, year = match.groups()
-    return datetime.strptime(f"{year}-{month}-{day}", "%Y-%m-%d").date()
-
-
-def _row_to_reading(row: Node, reading_date: date) -> Reading | None:
-    name_anchor = row.css_first("th a")
-    if name_anchor is None:
-        return None
-    storage_name = name_anchor.text(strip=True)
-    storage_slug = _slug_from_href(name_anchor.attributes.get("href") or "")
-    if not storage_name or not storage_slug:
-        return None
-
-    cells = row.css("td")
-    # Column order: 0=%, 1=volume ML, 2=level, 3=capacity ML, 4+=others we ignore.
-    if len(cells) < 4:
-        return None
-    percent_full = _parse_number(cells[0].text())
-    volume_ml = _parse_number(cells[1].text())
-    capacity_ml = _parse_number(cells[3].text())
-
+    reading_date, volume_ml, percent_full = parsed
+    capacity_ml: float | None = None
+    if volume_ml is not None and percent_full is not None and percent_full > 0:
+        capacity_ml = round(volume_ml / percent_full * 100.0, 2)
+    storage_url = (
+        f"{WATERLINE_BASE}/SSR/{entry.basin}/storage/{entry.station_id}/"
+        f"/location_{entry.station_id}.shtml"
+    )
     return Reading(
         company_slug=COMPANY_SLUG,
-        storage_name=storage_name,
-        storage_slug=storage_slug,
+        storage_name=entry.name,
+        storage_slug=entry.station_id.lower(),
         reading_date=reading_date,
         volume_ml=volume_ml,
         capacity_ml=capacity_ml,
         percent_full=percent_full,
-        source_url=SOURCE_URL,
+        source_url=storage_url,
     )
 
 
-def parse_storage_levels(html: str) -> list[Reading]:
-    """Pure parser: takes raw HTML, returns Readings. Used by tests and adapter."""
-    tree = HTMLParser(html)
-    reading_date = _extract_reading_date(tree)
-
-    readings: list[Reading] = []
-    seen_slugs: set[str] = set()
-    for table in tree.css("table[id$='Data']"):
-        for row in table.css("tbody tr.data"):
-            reading = _row_to_reading(row, reading_date)
-            if reading is None:
-                continue
-            # G-MW occasionally lists the same storage in multiple regions
-            # (e.g. shared MDBA assets). Keep the first occurrence.
-            if reading.storage_slug in seen_slugs:
-                continue
-            seen_slugs.add(reading.storage_slug)
-            readings.append(reading)
-    return readings
+def _daily_url(entry: IndexEntry) -> str:
+    return (
+        f"{WATERLINE_BASE}/SSR/{entry.basin}/storage/{entry.station_id}/"
+        f"/location_daily_{entry.station_id}.shtml"
+    )
 
 
 class GoulburnMurrayWaterAdapter(BaseAdapter):
@@ -114,6 +187,16 @@ class GoulburnMurrayWaterAdapter(BaseAdapter):
     source_url = SOURCE_URL
 
     def fetch(self) -> list[Reading]:
-        response = self._client.get(self.source_url)
-        response.raise_for_status()
-        return parse_storage_levels(response.text)
+        index_response = self._client.get(self.source_url)
+        index_response.raise_for_status()
+        report_date, entries = parse_index(index_response.text)
+
+        readings: list[Reading] = []
+        for entry in entries:
+            response = self._client.get(_daily_url(entry))
+            if response.status_code != 200:
+                continue
+            reading = build_reading(entry, response.text, report_date)
+            if reading is not None:
+                readings.append(reading)
+        return readings
