@@ -334,7 +334,7 @@ function Controls({
     // below) so the controls don't fight for space at 360px wide.
     <div
       ref={rootRef}
-      className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 border-b border-slate-200 bg-slate-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:flex-row sm:flex-wrap sm:items-center sm:rounded-md sm:border sm:bg-white dark:border-slate-800 dark:bg-slate-950/95 dark:sm:bg-slate-900"
+      className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:mx-0 sm:flex-row sm:flex-wrap sm:items-center sm:rounded-md sm:border sm:bg-white dark:border-slate-800 dark:bg-slate-950 dark:sm:bg-slate-900"
     >
       <input
         type="search"
@@ -641,11 +641,13 @@ function StorageRows({
       <caption className="sr-only">Victorian water storages — sortable</caption>
       <thead
         // top is set inline because it tracks the live controls-bar height —
-        // sticky top measured in StorageTable via ResizeObserver.
+        // sticky top measured in StorageTable via ResizeObserver. Background
+        // is fully opaque (no /95 alpha) so rows scrolling under don't peek
+        // through; bottom border on the row separates header from body.
         style={{ top: stickyOffset }}
-        className="bg-slate-50/95 backdrop-blur sm:sticky sm:z-10 dark:bg-slate-950/95 dark:sm:bg-slate-900/95"
+        className="bg-slate-50 sm:sticky sm:bg-white sm:z-10 dark:bg-slate-950 dark:sm:bg-slate-900"
       >
-        <tr>
+        <tr className="[&>th]:border-b [&>th]:border-slate-200 dark:[&>th]:border-slate-800">
           <SortHeader
             label="Storage"
             sortKey="storage_name"
@@ -786,9 +788,9 @@ function RegionRows({
       </caption>
       <thead
         style={{ top: stickyOffset }}
-        className="bg-slate-50/95 backdrop-blur sm:sticky sm:z-10 dark:bg-slate-950/95 dark:sm:bg-slate-900/95"
+        className="bg-slate-50 sm:sticky sm:bg-white sm:z-10 dark:bg-slate-950 dark:sm:bg-slate-900"
       >
-        <tr>
+        <tr className="[&>th]:border-b [&>th]:border-slate-200 dark:[&>th]:border-slate-800">
           <SortHeader
             label="Region"
             sortKey="name"
