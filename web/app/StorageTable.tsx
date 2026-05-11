@@ -20,7 +20,11 @@ import {
 } from "@/lib/format";
 import { compareNullsLast, sortBy, type SortDir } from "@/lib/sort";
 import { downloadCsv, rowsToCsv, todayIsoDate } from "@/lib/csv";
+import { usePersistentStringSet } from "@/lib/persistent-state";
 import type { CompanyGroup, LatestReading } from "@/lib/types";
+
+// Versioned localStorage key — bump if the storage shape ever changes.
+const HIDDEN_REGIONS_KEY = "vic-water:hidden-regions:v1";
 
 type View = "storages" | "regions";
 type Bucket = "all" | "low" | "mid" | "high" | "over";
@@ -86,7 +90,9 @@ export default function StorageTable({
   const [view, setView] = useState<View>("storages");
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
-  const [companies, setCompanies] = useState<Set<string>>(new Set());
+  // Persistent across sessions — see usePersistentStringSet for the key.
+  const [hiddenCompanies, setHiddenCompanies] =
+    usePersistentStringSet(HIDDEN_REGIONS_KEY);
   const [bucket, setBucket] = useState<Bucket>("all");
   const [storageSortKey, setStorageSortKey] =
     useState<StorageSortKey>("percent_full");
@@ -106,7 +112,7 @@ export default function StorageTable({
   const filteredStorages = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     return readings.filter((r) => {
-      if (companies.size > 0 && !companies.has(r.company_slug)) return false;
+      if (hiddenCompanies.has(r.company_slug)) return false;
       if (!bucketMatch(r.percent_full, bucket)) return false;
       if (q) {
         const hay = `${r.storage_name} ${r.company_name}`.toLowerCase();
@@ -114,7 +120,7 @@ export default function StorageTable({
       }
       return true;
     });
-  }, [readings, deferredSearch, companies, bucket]);
+  }, [readings, deferredSearch, hiddenCompanies, bucket]);
 
   const sortedStorages = useMemo(() => {
     return sortBy(filteredStorages, (r) => r[storageSortKey], storageSortDir);
@@ -123,7 +129,7 @@ export default function StorageTable({
   const regionRows = useMemo<RegionRow[]>(() => {
     const q = deferredSearch.trim().toLowerCase();
     const baseReadings = readings.filter((r) => {
-      if (companies.size > 0 && !companies.has(r.company_slug)) return false;
+      if (hiddenCompanies.has(r.company_slug)) return false;
       if (q) {
         const hay = `${r.storage_name} ${r.company_name}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -138,7 +144,7 @@ export default function StorageTable({
         null,
       ),
     }));
-  }, [readings, deferredSearch, companies]);
+  }, [readings, deferredSearch, hiddenCompanies]);
 
   const sortedRegions = useMemo(() => {
     return [...regionRows].sort((a, b) => {
@@ -163,7 +169,7 @@ export default function StorageTable({
   }, [regionRows, regionSortKey, regionSortDir]);
 
   function toggleCompany(slug: string) {
-    setCompanies((prev) => {
+    setHiddenCompanies((prev) => {
       const next = new Set(prev);
       if (next.has(slug)) next.delete(slug);
       else next.add(slug);
@@ -245,9 +251,9 @@ export default function StorageTable({
         bucket={bucket}
         setBucket={setBucket}
         allCompanies={allCompanies}
-        selectedCompanies={companies}
+        hiddenCompanies={hiddenCompanies}
         toggleCompany={toggleCompany}
-        clearCompanies={() => setCompanies(new Set())}
+        showAllCompanies={() => setHiddenCompanies(new Set())}
         onExport={exportCsv}
         exportCount={
           view === "storages" ? sortedStorages.length : sortedRegions.length
@@ -289,9 +295,9 @@ function Controls({
   bucket,
   setBucket,
   allCompanies,
-  selectedCompanies,
+  hiddenCompanies,
   toggleCompany,
-  clearCompanies,
+  showAllCompanies,
   onExport,
   exportCount,
 }: {
@@ -302,9 +308,9 @@ function Controls({
   bucket: Bucket;
   setBucket: (b: Bucket) => void;
   allCompanies: { slug: string; name: string }[];
-  selectedCompanies: Set<string>;
+  hiddenCompanies: Set<string>;
   toggleCompany: (slug: string) => void;
-  clearCompanies: () => void;
+  showAllCompanies: () => void;
   onExport: () => void;
   exportCount: number;
 }) {
@@ -323,9 +329,9 @@ function Controls({
       <div className="flex flex-wrap items-center gap-2">
         <CompanyFilter
           allCompanies={allCompanies}
-          selected={selectedCompanies}
+          hidden={hiddenCompanies}
           toggle={toggleCompany}
-          clear={clearCompanies}
+          showAll={showAllCompanies}
         />
         {view === "storages" && (
           <div
@@ -418,14 +424,14 @@ function DownloadIcon() {
 
 function CompanyFilter({
   allCompanies,
-  selected,
+  hidden,
   toggle,
-  clear,
+  showAll,
 }: {
   allCompanies: { slug: string; name: string }[];
-  selected: Set<string>;
+  hidden: Set<string>;
   toggle: (slug: string) => void;
-  clear: () => void;
+  showAll: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -447,10 +453,15 @@ function CompanyFilter({
     };
   }, [open]);
 
+  // Only count hidden slugs that still exist in the current data — saved
+  // hides for companies that have since dropped out shouldn't inflate the
+  // count or the "show all" affordance.
+  const hiddenCount = allCompanies.filter((c) => hidden.has(c.slug)).length;
+  const visibleCount = allCompanies.length - hiddenCount;
   const label =
-    selected.size === 0
-      ? "All regions"
-      : `${selected.size} ${selected.size === 1 ? "region" : "regions"}`;
+    hiddenCount === 0
+      ? "All sources"
+      : `${visibleCount} of ${allCompanies.length} sources`;
 
   return (
     <div ref={ref} className="relative">
@@ -484,8 +495,12 @@ function CompanyFilter({
           role="menu"
           className="absolute left-0 z-30 mt-1 w-64 rounded-md border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
         >
+          <p className="px-2 pb-1 pt-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Saved in this browser
+          </p>
           {allCompanies.map((c) => {
-            const checked = selected.has(c.slug);
+            // Checked = visible. Uncheck to hide; persists to localStorage.
+            const visible = !hidden.has(c.slug);
             return (
               <label
                 key={c.slug}
@@ -493,7 +508,7 @@ function CompanyFilter({
               >
                 <input
                   type="checkbox"
-                  checked={checked}
+                  checked={visible}
                   onChange={() => toggle(c.slug)}
                   className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-900"
                 />
@@ -501,13 +516,13 @@ function CompanyFilter({
               </label>
             );
           })}
-          {selected.size > 0 && (
+          {hiddenCount > 0 && (
             <button
               type="button"
-              onClick={clear}
+              onClick={showAll}
               className="mt-1 w-full rounded px-2 py-1.5 text-left text-xs font-medium text-sky-700 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950/50"
             >
-              Clear selection
+              Show all sources
             </button>
           )}
         </div>
