@@ -10,9 +10,8 @@ import StorageTable from "./StorageTable";
 import type { LatestReading } from "@/lib/types";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-// Re-render at most every hour. The scraper only writes once a day, so
-// hourly is plenty fresh and keeps PostgREST quiet.
-export const revalidate = 3600;
+// Always fetch fresh data from Supabase on every request.
+export const dynamic = "force-dynamic";
 
 async function loadReadings(): Promise<LatestReading[]> {
   const { data, error } = await supabase
