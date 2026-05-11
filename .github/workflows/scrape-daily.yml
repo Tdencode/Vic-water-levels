@@ -45,10 +45,10 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        # Inline both flags as GitHub expressions: empty when the input is
-        # blank/false, fully formed when set. Avoids fragile in-bash
-        # conditionals around ${{ ... }} substitution.
+        # Boolean workflow_dispatch inputs arrive as the strings 'true'/'false'.
+        # A bare `inputs.dry_run &&` treats 'false' as truthy (non-empty string),
+        # so we use == true to get correct boolean semantics.
         run: >-
           python -m scrapers.runner
           ${{ inputs.company && format('--company {0}', inputs.company) || '' }}
-          ${{ inputs.dry_run && '--dry-run' || '' }}
+          ${{ inputs.dry_run == true && '--dry-run' || '' }}
