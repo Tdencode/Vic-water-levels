@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+// useRef and useEffect are still used by CompanyFilter for click-outside.
 import { groupByCompany } from "@/lib/group";
 import {
   fillColorClass,
@@ -188,23 +189,6 @@ export default function StorageTable({
     }
   }
 
-  // Sticky thead clipping fix: measure the controls bar live and pass its
-  // height down so each thead's `top` matches what's actually rendered.
-  // Hardcoding (we used to use top-[3.25rem]) was always 4-8px too small
-  // and tucked the column headers under the controls bar.
-  const controlsRef = useRef<HTMLDivElement>(null);
-  const [stickyOffset, setStickyOffset] = useState(56);
-
-  useEffect(() => {
-    const el = controlsRef.current;
-    if (!el) return;
-    const measure = () => setStickyOffset(el.offsetHeight);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   // Export the rows currently visible (filtered + sorted) for whichever
   // view is active. Volumes are written in raw ML so spreadsheets can do
   // their own math; the on-screen GL/TL formatting is presentation only.
@@ -254,7 +238,6 @@ export default function StorageTable({
   return (
     <section aria-label="Storage table" className="mb-12">
       <Controls
-        rootRef={controlsRef}
         view={view}
         setView={setView}
         search={search}
@@ -277,7 +260,6 @@ export default function StorageTable({
             sortKey={storageSortKey}
             sortDir={storageSortDir}
             onSort={clickStorageHeader}
-            stickyOffset={stickyOffset}
           />
         ) : (
           <RegionRows
@@ -285,7 +267,6 @@ export default function StorageTable({
             sortKey={regionSortKey}
             sortDir={regionSortDir}
             onSort={clickRegionHeader}
-            stickyOffset={stickyOffset}
           />
         )}
       </div>
@@ -301,7 +282,6 @@ export default function StorageTable({
 }
 
 function Controls({
-  rootRef,
   view,
   setView,
   search,
@@ -315,7 +295,6 @@ function Controls({
   onExport,
   exportCount,
 }: {
-  rootRef: React.RefObject<HTMLDivElement | null>;
   view: View;
   setView: (v: View) => void;
   search: string;
@@ -332,10 +311,7 @@ function Controls({
   return (
     // Stack on mobile (search on its own row, then the filter chips wrap
     // below) so the controls don't fight for space at 360px wide.
-    <div
-      ref={rootRef}
-      className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:mx-0 sm:flex-row sm:flex-wrap sm:items-center sm:rounded-md sm:border sm:bg-white dark:border-slate-800 dark:bg-slate-950 dark:sm:bg-slate-900"
-    >
+    <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:mx-0 sm:flex-row sm:flex-wrap sm:items-center sm:rounded-md sm:border sm:bg-white dark:border-slate-800 dark:bg-slate-950 dark:sm:bg-slate-900">
       <input
         type="search"
         value={search}
@@ -623,30 +599,27 @@ function StorageRows({
   sortKey,
   sortDir,
   onSort,
-  stickyOffset,
 }: {
   rows: LatestReading[];
   sortKey: StorageSortKey;
   sortDir: SortDir;
   onSort: (k: StorageSortKey) => void;
-  stickyOffset: number;
 }) {
   // Mobile column priority (least-to-most hidden):
   //   always:   Storage, % Full, Volume
   //   sm 640+:  + Capacity
   //   md 768+:  + Region
   //   lg 1024+: + Reading date, Source link
+  //
+  // Thead is intentionally NOT sticky. The wrapping div uses overflow-x-auto
+  // so per CSS spec both axes become scroll containers, which hijacks the
+  // sticky context away from the viewport and on some browsers caused the
+  // thead to render below the first row of tbody. Sort + filter controls
+  // are sticky instead — that's the affordance that actually matters.
   return (
     <table className="w-full text-sm border-separate border-spacing-0">
       <caption className="sr-only">Victorian water storages — sortable</caption>
-      <thead
-        // top is set inline because it tracks the live controls-bar height —
-        // sticky top measured in StorageTable via ResizeObserver. Background
-        // is fully opaque (no /95 alpha) so rows scrolling under don't peek
-        // through; bottom border on the row separates header from body.
-        style={{ top: stickyOffset }}
-        className="bg-slate-50 sm:sticky sm:bg-white sm:z-10 dark:bg-slate-950 dark:sm:bg-slate-900"
-      >
+      <thead className="bg-slate-50 sm:bg-white dark:bg-slate-950 dark:sm:bg-slate-900">
         <tr className="[&>th]:border-b [&>th]:border-slate-200 dark:[&>th]:border-slate-800">
           <SortHeader
             label="Storage"
@@ -773,23 +746,18 @@ function RegionRows({
   sortKey,
   sortDir,
   onSort,
-  stickyOffset,
 }: {
   rows: RegionRow[];
   sortKey: RegionSortKey;
   sortDir: SortDir;
   onSort: (k: RegionSortKey) => void;
-  stickyOffset: number;
 }) {
   return (
     <table className="w-full text-sm border-separate border-spacing-0">
       <caption className="sr-only">
         Victorian water regions — sortable rollup
       </caption>
-      <thead
-        style={{ top: stickyOffset }}
-        className="bg-slate-50 sm:sticky sm:bg-white sm:z-10 dark:bg-slate-950 dark:sm:bg-slate-900"
-      >
+      <thead className="bg-slate-50 sm:bg-white dark:bg-slate-950 dark:sm:bg-slate-900">
         <tr className="[&>th]:border-b [&>th]:border-slate-200 dark:[&>th]:border-slate-800">
           <SortHeader
             label="Region"
