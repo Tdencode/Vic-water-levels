@@ -23,8 +23,19 @@ import { downloadCsv, rowsToCsv, todayIsoDate } from "@/lib/csv";
 import { usePersistentStringSet } from "@/lib/persistent-state";
 import type { CompanyGroup, LatestReading } from "@/lib/types";
 
-// Versioned localStorage key — bump if the storage shape ever changes.
+// Versioned localStorage keys — bump if the storage shape ever changes.
 const HIDDEN_REGIONS_KEY = "vic-water:hidden-regions:v1";
+const HIDDEN_STORAGES_KEY = "vic-water:hidden-storages:v1";
+
+// Canonical per-storage key: matches the React row key already in use.
+// Putting the company slug in front keeps it stable even if two companies
+// happen to slug a storage name identically (Lal Lal exists in two).
+function storageKey(r: {
+  company_slug: string;
+  storage_slug: string;
+}): string {
+  return `${r.company_slug}/${r.storage_slug}`;
+}
 
 type View = "storages" | "regions";
 type Bucket = "all" | "low" | "mid" | "high" | "over";
@@ -93,6 +104,8 @@ export default function StorageTable({
   // Persistent across sessions — see usePersistentStringSet for the key.
   const [hiddenCompanies, setHiddenCompanies] =
     usePersistentStringSet(HIDDEN_REGIONS_KEY);
+  const [hiddenStorages, setHiddenStorages] =
+    usePersistentStringSet(HIDDEN_STORAGES_KEY);
   const [bucket, setBucket] = useState<Bucket>("all");
   const [storageSortKey, setStorageSortKey] =
     useState<StorageSortKey>("percent_full");
@@ -113,6 +126,7 @@ export default function StorageTable({
     const q = deferredSearch.trim().toLowerCase();
     return readings.filter((r) => {
       if (hiddenCompanies.has(r.company_slug)) return false;
+      if (hiddenStorages.has(storageKey(r))) return false;
       if (!bucketMatch(r.percent_full, bucket)) return false;
       if (q) {
         const hay = `${r.storage_name} ${r.company_name}`.toLowerCase();
@@ -120,7 +134,7 @@ export default function StorageTable({
       }
       return true;
     });
-  }, [readings, deferredSearch, hiddenCompanies, bucket]);
+  }, [readings, deferredSearch, hiddenCompanies, hiddenStorages, bucket]);
 
   const sortedStorages = useMemo(() => {
     return sortBy(filteredStorages, (r) => r[storageSortKey], storageSortDir);
@@ -130,6 +144,7 @@ export default function StorageTable({
     const q = deferredSearch.trim().toLowerCase();
     const baseReadings = readings.filter((r) => {
       if (hiddenCompanies.has(r.company_slug)) return false;
+      if (hiddenStorages.has(storageKey(r))) return false;
       if (q) {
         const hay = `${r.storage_name} ${r.company_name}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -144,7 +159,7 @@ export default function StorageTable({
         null,
       ),
     }));
-  }, [readings, deferredSearch, hiddenCompanies]);
+  }, [readings, deferredSearch, hiddenCompanies, hiddenStorages]);
 
   const sortedRegions = useMemo(() => {
     return [...regionRows].sort((a, b) => {
@@ -176,6 +191,34 @@ export default function StorageTable({
       return next;
     });
   }
+
+  function toggleStorage(key: string) {
+    setHiddenStorages((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function hideAllVisible() {
+    setHiddenStorages((prev) => {
+      const next = new Set(prev);
+      for (const r of sortedStorages) next.add(storageKey(r));
+      return next;
+    });
+  }
+
+  // Hidden storage rows lookup by key → reading. We need the readable
+  // names for the dropdown even when the row itself is filtered out.
+  const hiddenStorageReadings = useMemo(() => {
+    const byKey = new Map<string, LatestReading>();
+    for (const r of readings) byKey.set(storageKey(r), r);
+    return [...hiddenStorages]
+      .map((k) => byKey.get(k))
+      .filter((r): r is LatestReading => r !== undefined)
+      .sort((a, b) => a.storage_name.localeCompare(b.storage_name));
+  }, [readings, hiddenStorages]);
 
   function clickStorageHeader(key: StorageSortKey) {
     if (key === storageSortKey) {
@@ -258,6 +301,11 @@ export default function StorageTable({
         exportCount={
           view === "storages" ? sortedStorages.length : sortedRegions.length
         }
+        hiddenStorageReadings={hiddenStorageReadings}
+        onUnhideStorage={toggleStorage}
+        onShowAllStorages={() => setHiddenStorages(new Set())}
+        onHideAllVisible={hideAllVisible}
+        visibleCount={sortedStorages.length}
       />
       <div className="-mx-4 mt-4 overflow-x-auto sm:mx-0">
         {view === "storages" ? (
@@ -266,6 +314,7 @@ export default function StorageTable({
             sortKey={storageSortKey}
             sortDir={storageSortDir}
             onSort={clickStorageHeader}
+            onHide={toggleStorage}
           />
         ) : (
           <RegionRows
@@ -300,6 +349,11 @@ function Controls({
   showAllCompanies,
   onExport,
   exportCount,
+  hiddenStorageReadings,
+  onUnhideStorage,
+  onShowAllStorages,
+  onHideAllVisible,
+  visibleCount,
 }: {
   view: View;
   setView: (v: View) => void;
@@ -313,6 +367,11 @@ function Controls({
   showAllCompanies: () => void;
   onExport: () => void;
   exportCount: number;
+  hiddenStorageReadings: LatestReading[];
+  onUnhideStorage: (key: string) => void;
+  onShowAllStorages: () => void;
+  onHideAllVisible: () => void;
+  visibleCount: number;
 }) {
   return (
     // Stack on mobile (search on its own row, then the filter chips wrap
@@ -332,6 +391,14 @@ function Controls({
           hidden={hiddenCompanies}
           toggle={toggleCompany}
           showAll={showAllCompanies}
+        />
+        <HiddenStoragesMenu
+          hiddenReadings={hiddenStorageReadings}
+          onUnhide={onUnhideStorage}
+          onShowAll={onShowAllStorages}
+          onHideAllVisible={onHideAllVisible}
+          visibleCount={visibleCount}
+          showHideAllVisible={view === "storages"}
         />
         {view === "storages" && (
           <div
@@ -403,6 +470,22 @@ function Controls({
   );
 }
 
+function CloseIcon() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    >
+      <path d="M4 4l8 8M12 4l-8 8" />
+    </svg>
+  );
+}
+
 function DownloadIcon() {
   return (
     <svg
@@ -419,6 +502,143 @@ function DownloadIcon() {
       <path d="M7 10l5 5 5-5" />
       <path d="M12 15V3" />
     </svg>
+  );
+}
+
+function HiddenStoragesMenu({
+  hiddenReadings,
+  onUnhide,
+  onShowAll,
+  onHideAllVisible,
+  visibleCount,
+  showHideAllVisible,
+}: {
+  hiddenReadings: LatestReading[];
+  onUnhide: (key: string) => void;
+  onShowAll: () => void;
+  onHideAllVisible: () => void;
+  visibleCount: number;
+  showHideAllVisible: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const hiddenCount = hiddenReadings.length;
+  // Hide the menu trigger entirely when there's nothing hidden AND no
+  // visible rows to bulk-hide — avoids cluttering the toolbar for users
+  // who never use this feature.
+  if (hiddenCount === 0 && (!showHideAllVisible || visibleCount === 0)) {
+    return null;
+  }
+
+  const label =
+    hiddenCount === 0 ? "Hide…" : `${hiddenCount} hidden`;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+      >
+        {label}
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          aria-hidden
+          className="text-slate-500 dark:text-slate-400"
+        >
+          <path
+            d="M3 4.5l3 3 3-3"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 z-30 mt-1 w-72 rounded-md border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+        >
+          <p className="px-2 pb-1 pt-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Saved in this browser
+          </p>
+          {showHideAllVisible && visibleCount > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                onHideAllVisible();
+                setOpen(false);
+              }}
+              className="mb-1 w-full rounded px-2 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Hide all {visibleCount} currently visible
+            </button>
+          )}
+          {hiddenCount === 0 ? (
+            <p className="px-2 py-2 text-sm text-slate-500 dark:text-slate-400">
+              Nothing hidden yet. Use the × on any row to hide a storage.
+            </p>
+          ) : (
+            <>
+              <div className="max-h-64 overflow-y-auto">
+                {hiddenReadings.map((r) => {
+                  const key = storageKey(r);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => onUnhide(key)}
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
+                    >
+                      <span className="flex-1 truncate">
+                        <span className="font-medium">{r.storage_name}</span>
+                        <span className="ml-1.5 text-xs text-slate-500 dark:text-slate-400">
+                          {r.company_name}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-xs text-sky-700 dark:text-sky-400">
+                        Unhide
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={onShowAll}
+                className="mt-1 w-full rounded px-2 py-1.5 text-left text-xs font-medium text-sky-700 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950/50"
+              >
+                Unhide all {hiddenCount}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -614,11 +834,13 @@ function StorageRows({
   sortKey,
   sortDir,
   onSort,
+  onHide,
 }: {
   rows: LatestReading[];
   sortKey: StorageSortKey;
   sortDir: SortDir;
   onSort: (k: StorageSortKey) => void;
+  onHide: (key: string) => void;
 }) {
   // Mobile column priority (least-to-most hidden):
   //   always:   Storage, % Full, Volume
@@ -703,13 +925,22 @@ function StorageRows({
         ) : (
           rows.map((r) => (
             <tr
-              key={`${r.company_slug}/${r.storage_slug}`}
-              className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              key={storageKey(r)}
+              className="group hover:bg-slate-50 dark:hover:bg-slate-800/50"
             >
               <td className="border-b border-slate-100 px-3 py-1.5 font-medium text-slate-900 dark:border-slate-800 dark:text-slate-50">
-                <span className="block min-w-0 break-words">
-                  {r.storage_name}
-                </span>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="min-w-0 break-words">{r.storage_name}</span>
+                  <button
+                    type="button"
+                    onClick={() => onHide(storageKey(r))}
+                    aria-label={`Hide ${r.storage_name}`}
+                    title={`Hide ${r.storage_name}`}
+                    className="shrink-0 rounded p-0.5 text-slate-400 opacity-100 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
               </td>
               <td className="hidden whitespace-nowrap border-b border-slate-100 px-3 py-1.5 text-slate-600 md:table-cell dark:border-slate-800 dark:text-slate-400">
                 {r.company_name}
