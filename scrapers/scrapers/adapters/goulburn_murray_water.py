@@ -25,6 +25,20 @@ SOURCE_URL = "https://www.g-mwater.com.au/water-operations/storage-levels"
 COMPANY_SLUG = "goulburn-murray-water"
 COMPANY_NAME = "Goulburn-Murray Water"
 
+# Only these eight storages are tracked; all others on the page are ignored.
+WANTED_SLUGS: frozenset[str] = frozenset(
+    {
+        "dartmouthdam",          # Dartmouth Dam
+        "humedam",               # Hume Dam
+        "lakeeildon",            # Lake Eildon
+        "warangabasin",          # Waranga Basin
+        "lakeeppalock",          # Lake Eppalock
+        "cairncurranreservoir",  # Cairn Curran Reservoir
+        "nillahcootie",          # Nillahcootie Reservoir
+        "tullaroopreservoir",    # Tullaroop Reservoir
+    }
+)
+
 _DATE_RE = re.compile(r"\b(\d{2})/(\d{2})/(\d{4})\b")
 
 
@@ -98,6 +112,8 @@ def parse_storage_levels(html: str) -> list[Reading]:
         for row in table.css("tbody tr.data"):
             reading = _row_to_reading(row, reading_date)
             if reading is None:
+                continue
+            if reading.storage_slug not in WANTED_SLUGS:
                 continue
             # G-MW occasionally lists the same storage in multiple regions
             # (e.g. shared MDBA assets). Keep the first occurrence.

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from scrapers.adapters.goulburn_murray_water import parse_storage_levels
+from scrapers.adapters.goulburn_murray_water import WANTED_SLUGS, parse_storage_levels
 
 FIXTURE = Path(__file__).parent / "fixtures" / "gmw_storage_levels.html"
 
@@ -14,9 +14,12 @@ def _load_fixture() -> str:
     return FIXTURE.read_text(encoding="utf-8")
 
 
-def test_parses_at_least_twenty_storages() -> None:
+def test_parses_only_whitelisted_storages() -> None:
     readings = parse_storage_levels(_load_fixture())
-    assert len(readings) >= 20, f"expected >=20 storages, got {len(readings)}"
+    slugs = {r.storage_slug for r in readings}
+    assert slugs == WANTED_SLUGS, (
+        f"unexpected slugs: extra={slugs - WANTED_SLUGS}, missing={WANTED_SLUGS - slugs}"
+    )
 
 
 def test_reading_date_extracted_from_last_updated() -> None:

@@ -7,6 +7,18 @@ export function formatVolume(ml: number | null | undefined): string {
   return `${Math.round(ml).toLocaleString("en-AU")} ML`;
 }
 
+// Always display in GL — for statewide/regional aggregate callout cards.
+export function formatVolumeGL(ml: number | null | undefined): string {
+  if (ml == null) return "—";
+  return `${(ml / 1_000).toFixed(1)} GL`;
+}
+
+// Always display in ML — for individual storage rows in the table.
+export function formatVolumeML(ml: number | null | undefined): string {
+  if (ml == null) return "—";
+  return `${Math.round(ml).toLocaleString("en-AU")} ML`;
+}
+
 export function formatPercent(pct: number | null | undefined): string {
   if (pct == null) return "—";
   return `${pct.toFixed(1)}%`;

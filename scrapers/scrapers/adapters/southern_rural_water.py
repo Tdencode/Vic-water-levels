@@ -45,11 +45,9 @@ COMPANY_NAME = "Southern Rural Water"
 RESERVOIRS: tuple[tuple[int, str, str], ...] = (
     (1, "Blue Rock Lake", "blue-rock-lake"),
     (2, "Lake Glenmaggie", "lake-glenmaggie"),
-    (3, "Lake Narracan", "lake-narracan"),
     (4, "Melton Reservoir", "melton-reservoir"),
     (5, "Merrimu Reservoir", "merrimu-reservoir"),
     (6, "Pykes Creek Reservoir", "pykes-creek-reservoir"),
-    (7, "Rosslynne Reservoir", "rosslynne-reservoir"),
 )
 
 

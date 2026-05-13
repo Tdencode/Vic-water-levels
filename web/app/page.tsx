@@ -1,14 +1,16 @@
 import { supabase } from "@/lib/supabase";
-import { computeStatewideTotals } from "@/lib/group";
+import { computeStatewideTotals, computeSubsetTotals } from "@/lib/group";
 import {
   fillTextClass,
   formatDate,
   formatPercent,
-  formatVolume,
+  formatVolumeGL,
 } from "@/lib/format";
 import StorageTable from "./StorageTable";
 import type { LatestReading } from "@/lib/types";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+const MELBOURNE_WATER_SLUGS = new Set(["melbourne-water"]);
 
 // Always fetch fresh data from Supabase on every request.
 export const dynamic = "force-dynamic";
@@ -25,6 +27,13 @@ async function loadReadings(): Promise<LatestReading[]> {
 export default async function HomePage() {
   const readings = await loadReadings();
   const totals = computeStatewideTotals(readings);
+  const metroTotals = computeSubsetTotals(readings, MELBOURNE_WATER_SLUGS);
+  const regionalSlugs = new Set(
+    readings
+      .map((r) => r.company_slug)
+      .filter((s) => !MELBOURNE_WATER_SLUGS.has(s)),
+  );
+  const regionalTotals = computeSubsetTotals(readings, regionalSlugs);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
@@ -48,20 +57,30 @@ export default async function HomePage() {
 
       <section
         aria-label="Statewide totals"
-        className="mb-10 grid grid-cols-1 gap-3 sm:mb-12 sm:grid-cols-3 sm:gap-4"
+        className="mb-10 grid grid-cols-1 gap-3 sm:mb-12 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5"
       >
         <StatCard
           label="Statewide stored"
-          value={formatVolume(totals.totalVolumeMl)}
+          value={formatVolumeGL(totals.totalVolumeMl)}
         />
         <StatCard
           label="Total capacity"
-          value={formatVolume(totals.totalCapacityMl)}
+          value={formatVolumeGL(totals.totalCapacityMl)}
         />
         <StatCard
           label="Statewide % full"
           value={formatPercent(totals.percentFull)}
           accentClass={fillTextClass(totals.percentFull)}
+        />
+        <StatCard
+          label="Melbourne Metro % full"
+          value={formatPercent(metroTotals.percentFull)}
+          accentClass={fillTextClass(metroTotals.percentFull)}
+        />
+        <StatCard
+          label="Regional Vic % full"
+          value={formatPercent(regionalTotals.percentFull)}
+          accentClass={fillTextClass(regionalTotals.percentFull)}
         />
       </section>
 
@@ -69,8 +88,9 @@ export default async function HomePage() {
 
       <footer className="mt-12 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:mt-16 sm:text-sm dark:border-slate-800 dark:text-slate-500">
         <p>
-          Data scraped daily from the seven Victorian water corporations.
-          Volumes shown in megalitres (ML) / gigalitres (GL) / teralitres (TL).
+          Data scraped daily from eight Victorian water corporations. Aggregate
+          volumes shown in gigalitres (GL); individual storage volumes in
+          megalitres (ML).
         </p>
       </footer>
     </main>

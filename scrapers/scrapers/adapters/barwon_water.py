@@ -49,7 +49,7 @@ PAGE_BASE = "https://www.barwonwater.vic.gov.au/water-and-waste/water-storages"
 COMPANY_SLUG = "barwon-water"
 COMPANY_NAME = "Barwon Water"
 
-REGIONS = ("geelong", "colac", "lorne", "apollo-bay")
+REGIONS = ("geelong",)
 
 _SLUG_NON_ALNUM = re.compile(r"[^a-z0-9]+")
 _NUMBER = re.compile(r"-?\d[\d,]*\.?\d*")

@@ -58,7 +58,6 @@ RESERVOIRS: tuple[tuple[str, str, str], ...] = (
     ("malmsbury-reservoir", "Malmsbury Reservoir", "malmsbury"),
     ("lauriston-reservoir", "Lauriston Reservoir", "lauriston"),
     ("upper-coliban-reservoir", "Upper Coliban Reservoir", "upper coliban"),
-    ("lake-eppalock", "Lake Eppalock", "eppalock"),
 )
 
 

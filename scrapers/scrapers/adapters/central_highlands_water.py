@@ -29,7 +29,7 @@ PAGE_BASE = "https://www.chw.net.au/community/water-storage-levels"
 COMPANY_SLUG = "central-highlands-water"
 COMPANY_NAME = "Central Highlands Water"
 
-AREA_IDS = (0, 1, 2, 3)
+AREA_IDS = (0,)  # Ballarat system only
 
 _SLUG_NON_ALNUM = re.compile(r"[^a-z0-9]+")
 _NUMBER = re.compile(r"-?\d[\d,]*\.?\d*")
