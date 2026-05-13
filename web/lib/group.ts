@@ -45,6 +45,7 @@ export type StatewideTotals = {
   totalCapacityMl: number;
   percentFull: number | null;
   latestReadingDate: string | null;
+  latestScrapedAt: string | null;
 };
 
 export function computeStatewideTotals(
@@ -53,6 +54,7 @@ export function computeStatewideTotals(
   let totalVolumeMl = 0;
   let totalCapacityMl = 0;
   let latestReadingDate: string | null = null;
+  let latestScrapedAt: string | null = null;
   const companies = new Set<string>();
 
   for (const r of readings) {
@@ -61,6 +63,9 @@ export function computeStatewideTotals(
     companies.add(r.company_slug);
     if (!latestReadingDate || r.reading_date > latestReadingDate) {
       latestReadingDate = r.reading_date;
+    }
+    if (!latestScrapedAt || r.scraped_at > latestScrapedAt) {
+      latestScrapedAt = r.scraped_at;
     }
   }
 
@@ -72,5 +77,33 @@ export function computeStatewideTotals(
     percentFull:
       totalCapacityMl > 0 ? (totalVolumeMl / totalCapacityMl) * 100 : null,
     latestReadingDate,
+    latestScrapedAt,
+  };
+}
+
+export type SubsetTotals = {
+  totalVolumeMl: number;
+  totalCapacityMl: number;
+  percentFull: number | null;
+};
+
+export function computeSubsetTotals(
+  readings: LatestReading[],
+  companySlugs: ReadonlySet<string>,
+): SubsetTotals {
+  let totalVolumeMl = 0;
+  let totalCapacityMl = 0;
+
+  for (const r of readings) {
+    if (!companySlugs.has(r.company_slug)) continue;
+    totalVolumeMl += r.volume_ml ?? 0;
+    totalCapacityMl += r.capacity_ml ?? 0;
+  }
+
+  return {
+    totalVolumeMl,
+    totalCapacityMl,
+    percentFull:
+      totalCapacityMl > 0 ? (totalVolumeMl / totalCapacityMl) * 100 : null,
   };
 }

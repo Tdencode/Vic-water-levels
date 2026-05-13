@@ -16,7 +16,8 @@ import {
   fillTextClass,
   formatDate,
   formatPercent,
-  formatVolume,
+  formatVolumeGL,
+  formatVolumeML,
 } from "@/lib/format";
 import { compareNullsLast, sortBy, type SortDir } from "@/lib/sort";
 import { downloadCsv, rowsToCsv, todayIsoDate } from "@/lib/csv";
@@ -949,10 +950,10 @@ function StorageRows({
                 <PercentCell pct={r.percent_full} />
               </td>
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-1.5 text-right tabular-nums text-slate-700 dark:border-slate-800 dark:text-slate-300">
-                {formatVolume(r.volume_ml)}
+                {formatVolumeML(r.volume_ml)}
               </td>
               <td className="hidden whitespace-nowrap border-b border-slate-100 px-3 py-1.5 text-right tabular-nums text-slate-700 sm:table-cell dark:border-slate-800 dark:text-slate-300">
-                {formatVolume(r.capacity_ml)}
+                {formatVolumeML(r.capacity_ml)}
               </td>
               <td className="hidden whitespace-nowrap border-b border-slate-100 px-3 py-1.5 text-slate-600 lg:table-cell dark:border-slate-800 dark:text-slate-400">
                 {formatDate(r.reading_date)}
@@ -1077,10 +1078,10 @@ function RegionRows({
                 {r.storages.length}
               </td>
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-1.5 text-right tabular-nums text-slate-700 dark:border-slate-800 dark:text-slate-300">
-                {formatVolume(r.totalVolumeMl)}
+                {formatVolumeGL(r.totalVolumeMl)}
               </td>
               <td className="hidden whitespace-nowrap border-b border-slate-100 px-3 py-1.5 text-right tabular-nums text-slate-700 sm:table-cell dark:border-slate-800 dark:text-slate-300">
-                {formatVolume(r.totalCapacityMl)}
+                {formatVolumeGL(r.totalCapacityMl)}
               </td>
               <td className="border-b border-slate-100 px-3 py-1.5 dark:border-slate-800">
                 <PercentCell pct={r.percentFull} />
