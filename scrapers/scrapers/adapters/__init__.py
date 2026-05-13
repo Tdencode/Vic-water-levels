@@ -5,7 +5,6 @@ from scrapers.adapters.central_highlands_water import CentralHighlandsWaterAdapt
 from scrapers.adapters.coliban_water import ColibanWaterAdapter
 from scrapers.adapters.gippsland_water import GippslandWaterAdapter
 from scrapers.adapters.goulburn_murray_water import GoulburnMurrayWaterAdapter
-from scrapers.adapters.gwmwater import GWMWaterAdapter
 from scrapers.adapters.melbourne_water import MelbourneWaterAdapter
 from scrapers.adapters.southern_rural_water import SouthernRuralWaterAdapter
 from scrapers.base import BaseAdapter
@@ -13,7 +12,6 @@ from scrapers.base import BaseAdapter
 ALL_ADAPTERS: list[type[BaseAdapter]] = [
     MelbourneWaterAdapter,
     GoulburnMurrayWaterAdapter,
-    GWMWaterAdapter,
     BarwonWaterAdapter,
     CentralHighlandsWaterAdapter,
     SouthernRuralWaterAdapter,
