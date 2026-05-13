@@ -2,10 +2,8 @@ name: Daily scrape
 
 on:
   schedule:
-    # 20:00 UTC = 06:00 AEST (UTC+10) / 07:00 AEDT (UTC+11). Late enough
-    # that overnight publishes have landed; (storage_id, reading_date)
-    # uniqueness makes a re-run on the same day a no-op.
-    - cron: "0 20 * * *"
+    # 04:00 UTC = 14:00 AEST (UTC+10) / 15:00 AEDT (UTC+11).
+    - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       company:
