@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { computeStatewideTotals, computeSubsetTotals } from "@/lib/group";
 import {
   fillTextClass,
-  formatDate,
+  formatDateTime,
   formatPercent,
   formatVolumeGL,
 } from "@/lib/format";
@@ -46,8 +46,8 @@ export default async function HomePage() {
             <p className="mt-2 text-sm text-slate-600 sm:mt-3 sm:text-base dark:text-slate-400">
               Daily levels for {totals.storageCount} reservoirs across{" "}
               {totals.companyCount} water corporations.
-              {totals.latestReadingDate && (
-                <> Last reading {formatDate(totals.latestReadingDate)}.</>
+              {totals.latestScrapedAt && (
+                <> Last updated {formatDateTime(totals.latestScrapedAt)}.</>
               )}
             </p>
           </div>

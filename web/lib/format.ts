@@ -10,7 +10,8 @@ export function formatVolume(ml: number | null | undefined): string {
 // Always display in GL — for statewide/regional aggregate callout cards.
 export function formatVolumeGL(ml: number | null | undefined): string {
   if (ml == null) return "—";
-  return `${(ml / 1_000).toFixed(1)} GL`;
+  const gl = ml / 1_000;
+  return `${gl.toLocaleString("en-AU", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GL`;
 }
 
 // Always display in ML — for individual storage rows in the table.
@@ -31,6 +32,20 @@ export function formatDate(iso: string | null | undefined): string {
     day: "numeric",
     month: "short",
     year: "numeric",
+  });
+}
+
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Australia/Melbourne",
+    timeZoneName: "short",
   });
 }
 
